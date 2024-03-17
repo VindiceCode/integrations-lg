@@ -71,7 +71,7 @@ jobs:
         with:
           app-name: 'callhandling'
           slot-name: 'Development-Test'
-          package: '../release.zip'
+          package: 'callhandling'
           scm-do-build-during-deployment: true
           enable-oryx-build: true
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_4592A32C96F24FA7A73663C49489E6C3 }}
