@@ -38,7 +38,8 @@ jobs:
       # Optional: Add step to run tests here
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        working-directory: callhandling
+        run: zip ../release.zip ./* -r
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
@@ -70,7 +71,7 @@ jobs:
         with:
           app-name: 'callhandling'
           slot-name: 'Development-Test'
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          package: '../release.zip'
           scm-do-build-during-deployment: true
           enable-oryx-build: true
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_4592A32C96F24FA7A73663C49489E6C3 }}
