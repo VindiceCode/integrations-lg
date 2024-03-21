@@ -16,7 +16,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 status_code=400
             )
 
-        # Get the connection string from the function app settings - TEST TO DEPLOY
+        # Get the connection string from the function app settings - 
         connection_string = os.environ["urldatavici_storage_account_connection_string"]
 
         # Create a BlobServiceClient object
