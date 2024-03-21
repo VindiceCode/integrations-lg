@@ -24,7 +24,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             )
 
         # Initialize the HubSpot API Client
-        api_key = os.environ["hubspot_privateapp_api_secret"]
+        api_key = "pat-na1-d9d61458-1ee0-4912-851f-da86be8286b6"
         api_client = HubSpot(api_key=api_key)
 
         # Create a list to store the captured properties
