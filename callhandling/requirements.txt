@@ -1,4 +1,4 @@
 azure-functions
 azure-storage-blob
 requests
-hubspot-api-client==3.10.0
+hubspot-api-client
