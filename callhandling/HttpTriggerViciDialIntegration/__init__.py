@@ -50,6 +50,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             simple_public_object_input_for_create=simple_public_object_input_for_create
         )
 
+        return func.HttpResponse("Success! Contact Created in Hubspot - One Step Closer to World Domination!", status_code=200)
+
+
     except ValueError as ve:
         logging.error(f"ValueError: {str(ve)}")
         return func.HttpResponse("Invalid input", status_code=400)
