@@ -5,6 +5,8 @@ import requests
 from hubspot import HubSpot
 from hubspot.crm.contacts import SimplePublicObjectInputForCreate
 from hubspot.crm.contacts.exceptions import ApiException
+from hubspot.auth.oauth import ApiException  # Add this line
+from hubspot import Client  # Add this line
 import azure.functions as func
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -28,16 +30,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         assert isinstance(last_name, str), "Last name must be a string"
         
         # Initialize the HubSpot API Client
-        api_key = "pat-na1-d9d61458-1ee0-4912-851f-da86be8286b6"
-        print(f"API key: {api_key}")
-        api_client = HubSpot(api_key=api_key)
+        access_token = os.getenv('hubspot_privateapp_access_token')  # Modify this line
+        api_client = Client.create(access_token=access_token)  # Modify this line
 
         # Create a list to store the captured properties
         captured_properties = [first_name, last_name, phone_number]
 
-        # Log the captured properties
-        logging.info(f"Captured properties: {captured_properties}")
-
+        # Create a contact
         simple_public_object_input_for_create = SimplePublicObjectInputForCreate(
             properties={
                 "firstname": first_name,
@@ -49,23 +48,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         api_response = api_client.crm.contacts.basic_api.create(
             simple_public_object_input_for_create=simple_public_object_input_for_create
         )
-
-        # Get the ID of the newly created contact
-        contact_id = api_response.id
-
-        # Construct the URL to the contact in the HubSpot web interface
-        hub_id = 44341454
-        contact_url = f"https://app.hubspot.com/contacts/{hub_id}/contact/{contact_id}"
-
-        # Return the success response with the link to the created contact
-        response = f"Contact Created in Hubspot with ID: {contact_id}\n\n"
-        response += f"Captured parameters:\n"
-        response += f"First Name: {first_name}\n"
-        response += f"Last Name: {last_name}\n"
-        response += f"Phone Number: {phone_number}\n"
-        response += f"Email: {email}\n"
-        response += f"Contact URL: {contact_url}\n"
-        return func.HttpResponse(response)
 
     except ValueError as ve:
         logging.error(f"ValueError: {str(ve)}")
