@@ -6,7 +6,7 @@ from hubspot import HubSpot
 from hubspot.crm.contacts import SimplePublicObjectInputForCreate
 from hubspot.crm.contacts.exceptions import ApiException
 from hubspot.auth.oauth import ApiException  # Add this line
-from hubspot import Client  # Add this line
+import hubspot  # Add this line
 import azure.functions as func
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -30,7 +30,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         assert isinstance(last_name, str), "Last name must be a string"
         
         # Initialize the HubSpot API Client
-        api_client = Client.create(access_token="your_access_token")  # Modify this line
+        access_token = os.getenv('hubspot_privateapp_access_token')  # Modify this line
+        client = hubspot.Client.create(access_token=access_token)  # Modify this line
 
         # Create a list to store the captured properties
         captured_properties = [first_name, last_name, phone_number]
@@ -44,7 +45,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "email": email
             }
         )
-        api_response = api_client.crm.contacts.basic_api.create(
+        api_response = client.crm.contacts.basic_api.create(
             simple_public_object_input_for_create=simple_public_object_input_for_create
         )
 
