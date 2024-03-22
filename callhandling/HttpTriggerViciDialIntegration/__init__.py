@@ -30,8 +30,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         assert isinstance(last_name, str), "Last name must be a string"
         
         # Initialize the HubSpot API Client
-        access_token = os.getenv('hubspot_privateapp_access_token')  # Modify this line
-        api_client = Client.create(access_token=access_token)  # Modify this line
+        api_client = Client.create(access_token="your_access_token")  # Modify this line
 
         # Create a list to store the captured properties
         captured_properties = [first_name, last_name, phone_number]
