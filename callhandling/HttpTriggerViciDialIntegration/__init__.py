@@ -22,9 +22,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "Please provide all required parameters: firstName, lastName, phoneNumber",
                 status_code=400
             )
-
+        
+        # Check that the properties are in the correct format
+        assert isinstance(first_name, str), "First name must be a string"
+        assert isinstance(last_name, str), "Last name must be a string"
+        
         # Initialize the HubSpot API Client
         api_key = "pat-na1-d9d61458-1ee0-4912-851f-da86be8286b6"
+        print(f"API key: {api_key}")
         api_client = HubSpot(api_key=api_key)
 
         # Create a list to store the captured properties
