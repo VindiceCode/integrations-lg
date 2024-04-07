@@ -8,9 +8,13 @@ from hubspot.crm.contacts.exceptions import ApiException
 from hubspot.auth.oauth import ApiException  # Add this line
 import hubspot  # Add this line
 import azure.functions as func
+import json
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
+        #Creates a Dictionary from String Values 
+        prospect = json.loads(payload.get('prospect'))
+        additional = json.loads(payload.get('additional'))
         # Parse the JSON payload from the request body
         payload = req.get_json()
         prospect = payload.get('prospect')
@@ -34,6 +38,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         message = additional.get('message').get('content')
         content = message.get('content')
         event_date = message.get('event_date')
+
+        print(f"Type of prospect: {type(prospect)}")
+        print(f"Type of additional: {type(additional)}")
 
         # Check if "Acknowledged" is in tags
         if tags is not None and "Acknowledged" in tags:
