@@ -70,6 +70,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         api_response = client.crm.contacts.basic_api.create(
             simple_public_object_input_for_create=simple_public_object_input_for_create
         )
+        
+        print(api_response)
 
         return func.HttpResponse("Success! Hawkvision Contact Created in Hubspot - One Step Closer to World Domination!", status_code=200)
 
