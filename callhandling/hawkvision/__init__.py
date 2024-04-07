@@ -14,6 +14,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
          # Parse the JSON payload from the request body
         payload = req.get_json()
+        # Print the JSON payload and object types
+        print(f"Payload: {payload}")
+        print(f"Type of prospect: {type(prospect)}")
+        print(f"Type of additional: {type(additional)}")
         prospect = payload.get('prospect')
         first_name = prospect.get('first_name')
         last_name = prospect.get('last_name')
@@ -36,8 +40,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         content = message.get('content')
         event_date = message.get('event_date')
 
-        print(f"Type of prospect: {type(prospect)}")
-        print(f"Type of additional: {type(additional)}")
+        
 
         # Check if "Acknowledged" is in tags
         if tags is not None and "Acknowledged" in tags:
