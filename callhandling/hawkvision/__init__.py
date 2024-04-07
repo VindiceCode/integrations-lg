@@ -14,10 +14,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
          # Parse the JSON payload from the request body
         payload = req.get_json()
-        # Print the JSON payload and object types
+        # Print the JSON payload
         print(f"Payload: {payload}")
-        print(f"Type of prospect: {type(prospect)}")
-        print(f"Type of additional: {type(additional)}")
         prospect = payload.get('prospect')
         first_name = prospect.get('first_name')
         last_name = prospect.get('last_name')
