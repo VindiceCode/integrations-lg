@@ -38,7 +38,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=200)
 
         # Check if the message includes "stop" or "not interested"
-        if message_content is not None and ('stop' in message_content.lower() or 'not interested' in message_content.lower()):
+        if message is not None and ('stop' in message.lower() or 'not interested' in message.lower()):
             return func.HttpResponse("Message includes 'stop' or 'not interested'. Not creating a HubSpot contact.", status_code=200)
        
         
