@@ -30,17 +30,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         message = payload.get('message')
 
         # Check if "Acknowledged" is in tags
-        if "Acknowledged" in tags:
+        if tags is not None and "Acknowledged" in tags:
             return func.HttpResponse("Tag 'Acknowledged' found. Not creating a HubSpot contact.", status_code=200)
 
         # Check if dnc is True
         if dnc is True:
             return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=200)
 
-        # Check if message contains "Stop" or "not interested"
-        if "Stop" in message or "not interested" in message.lower():
-            return func.HttpResponse("Message contains 'Stop' or 'not interested'. Not creating a HubSpot contact.", status_code=200)
-
+        # Check if the message includes "stop" or "not interested"
+        if message_content is not None and ('stop' in message_content.lower() or 'not interested' in message_content.lower()):
+            return func.HttpResponse("Message includes 'stop' or 'not interested'. Not creating a HubSpot contact.", status_code=200)
+       
         
         # Initialize the HubSpot API Client
         access_token = os.getenv('hubspot_privateapp_access_token')  # Modify this line
