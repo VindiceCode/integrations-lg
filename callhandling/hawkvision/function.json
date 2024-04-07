@@ -9,13 +9,13 @@
             "methods": [
                 "get",
                 "post"
-            ]
+            ],
+            "route": "webhook"
         },
         {
             "type": "http",
             "direction": "out",
-            "name": "$return",
-            "route": "hawkvision/webhook"
+            "name": "$return"
         }
     ]
 }
