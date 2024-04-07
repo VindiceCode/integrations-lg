@@ -12,11 +12,11 @@ import json
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
+        payload = req.get_json()
         #Creates a Dictionary from String Values 
         prospect = json.loads(payload.get('prospect'))
         additional = json.loads(payload.get('additional'))
         # Parse the JSON payload from the request body
-        payload = req.get_json()
         prospect = payload.get('prospect')
         first_name = prospect.get('first_name')
         last_name = prospect.get('last_name')
