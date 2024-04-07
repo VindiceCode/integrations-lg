@@ -13,21 +13,27 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         # Parse the JSON payload from the request body
         payload = req.get_json()
-        first_name = payload.get('first_name')
-        last_name = payload.get('last_name')
-        full_name = payload.get('full_name')
-        phone_number = payload.get('phone')
-        address = payload.get('address')
-        city = payload.get('city')
-        state = payload.get('state')
-        zip_code = payload.get('zip')
-        assigned_to = payload.get('assigned_to')
-        tags = payload.get('tags')
-        dnc = payload.get('dnc')
-        created_at = payload.get('created_at')
-        updated_at = payload.get('updated_at')
-        prospect_id = payload.get('prospect_id')
-        message = payload.get('message')
+        prospect = payload.get('prospect')
+        first_name = prospect.get('first_name')
+        last_name = prospect.get('last_name')
+        full_name = prospect.get('full_name')
+        phone_number = prospect.get('phone')
+        address = prospect.get('address')
+        city = prospect.get('city')
+        state = prospect.get('state')
+        zip_code = prospect.get('zip')
+        assigned_to = prospect.get('assigned_to')
+        tags = prospect.get('tags')
+        dnc = prospect.get('dnc')
+        created_at = prospect.get('created_at')
+        updated_at = prospect.get('updated_at')
+        prospect_id = prospect.get('prospect_id')
+
+        #Access the Additional Top-End Object and Message Objects
+        additional = payload.get('additional')
+        message = additional.get('message').get('content')
+        content = message.get('content')
+        event_date = message.get('event_date')
 
         # Check if "Acknowledged" is in tags
         if tags is not None and "Acknowledged" in tags:
@@ -62,7 +68,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "zip": zip_code,
                 "bonzo_owner": assigned_to,
                 "bonzo_create_date": created_at,
-                "time_of_bonzo_response": updated_at,
+                "time_of_bonzo_response": event_date,
                 "bonzo_propsect_id": prospect_id,
                 "bonzo_lead_initial_response": message  
             }
