@@ -8,15 +8,12 @@ from hubspot.crm.contacts.exceptions import ApiException
 from hubspot.auth.oauth import ApiException  # Add this line
 import hubspot  # Add this line
 import azure.functions as func
-import json
+
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
+         # Parse the JSON payload from the request body
         payload = req.get_json()
-        #Creates a Dictionary from String Values 
-        prospect = json.loads(payload.get('prospect'))
-        additional = json.loads(payload.get('additional'))
-        # Parse the JSON payload from the request body
         prospect = payload.get('prospect')
         first_name = prospect.get('first_name')
         last_name = prospect.get('last_name')
