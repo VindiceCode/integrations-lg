@@ -34,7 +34,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         #Access the Additional Top-End Object and Message Objects
         additional = payload.get('additional')
-        message = additional.get('message').get('content')
+        message = additional.get('message')
         content = message.get('content')
         event_date = message.get('event_date')
 
