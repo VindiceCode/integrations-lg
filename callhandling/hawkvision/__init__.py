@@ -30,7 +30,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         dnc = prospect.get('dnc')
         created_at = prospect.get('created_at')
         updated_at = prospect.get('updated_at')
-        prospect_id = prospect.get('prospect_id')
+        prospect_id = prospect.get('id')
 
         #Access the Additional Top-End Object and Message Objects
         additional = payload.get('additional')
