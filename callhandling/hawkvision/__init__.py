@@ -63,7 +63,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # Check if a contact with the same phone number already exists
         filter = Filter(
-            operationtype="PROPERTY", 
+            operationType="PROPERTY", 
             operator="IS_EQUAL_TO", 
             includeObjectsWithNoValueSet=False, 
             propertyName="phone",
