@@ -8,7 +8,7 @@ from hubspot.crm.contacts.exceptions import ApiException
 from hubspot.auth.oauth import ApiException  # Add this line
 import hubspot  # Add this line
 import azure.functions as func
-
+from ratelimiter import RateLimiter
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
@@ -59,23 +59,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # Create a list to store the captured properties
         captured_properties = [first_name, last_name, full_name, phone_number, address, city, state, zip_code, assigned_to, tags, dnc, created_at, updated_at, prospect_id, message]
-
+        
+        # Create a RateLimiter instance
+        rate_limiter = RateLimiter(max_calls=148, period=10)
         # Create a contact
-        simple_public_object_input_for_create = SimplePublicObjectInputForCreate(
-            properties={
-                "firstname": first_name,
-                "lastname": last_name,
-                "phone": phone_number,
-                "address": address,
-                "city": city,
-                "state": state,
-                "zip": zip_code,
-                "bonzo_owner": assigned_to,
-                "bonzo_create_date": created_at,
-                "time_of_bonzo_response": event_date,
-                "bonzo_propsect_id": prospect_id,
-                "bonzo_lead_initial_response": content,  
-            }
+        with rate_limiter:
+            simple_public_object_input_for_create = SimplePublicObjectInputForCreate(
+                properties={
+                    "firstname": first_name,
+                    "lastname": last_name,
+                    "phone": phone_number,
+                    "address": address,
+                    "city": city,
+                    "state": state,
+                    "zip": zip_code,
+                    "bonzo_owner": assigned_to,
+                    "bonzo_create_date": created_at,
+                    "time_of_bonzo_response": event_date,
+                    "bonzo_propsect_id": prospect_id,
+                    "bonzo_lead_initial_response": content,  
+                }
         )
         api_response = client.crm.contacts.basic_api.create(
             simple_public_object_input_for_create=simple_public_object_input_for_create
