@@ -3,10 +3,10 @@ import os
 import csv
 import requests
 from hubspot import HubSpot
-from hubspot.crm.contacts import SimplePublicObjectInputForCreate
+from hubspot.crm.contacts import Filter, FilterGroup, PublicObjectSearchRequest, SimplePublicObjectInputForCreate
 from hubspot.crm.contacts.exceptions import ApiException
-from hubspot.auth.oauth import ApiException  # Add this line
-import hubspot  # Add this line
+from hubspot.auth.oauth import ApiException 
+import hubspot  
 import azure.functions as func
 from ratelimiter import RateLimiter
 
@@ -50,35 +50,49 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # Check if the message includes "stop" or "not interested"
         if message is not None and ('stop' in message or 'STOP' in message or 'not interested' in message):
-            return func.HttpResponse("Message includes 'stop' or 'not interested'. Not creating a HubSpot contact.", status_code=200)
-        
-        # Initialize the HubSpot API Client
-        access_token = os.getenv('hubspot_privateapp_access_token')  # Modify this line
-        client = hubspot.Client.create(access_token=access_token)  # Modify this line
+            return func.HttpResponse("Message includes 'stop' or 'not interested'. Not creating a HubSpot contact.", status_code=200) 
 
         # Create a list to store the captured properties
         captured_properties = [first_name, last_name, full_name, phone_number, address, city, state, zip_code, assigned_to, tags, dnc, created_at, updated_at, prospect_id, message]
         
         # Create a RateLimiter instance
         rate_limiter = RateLimiter(max_calls=148, period=10)
+         # Initialize the HubSpot API Client
+        access_token = os.getenv('hubspot_privateapp_access_token')
+        client = hubspot.Client.create(access_token=access_token)
+
+        # Check if a contact with the same phone number already exists
+        filter = Filter(propertyName="phone", operator="EQ", value=phone_number)
+        filter_group = FilterGroup(filters=[filter])
+        search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
+
+        try:
+            existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
+        except ApiException as e:
+            if e.status != 404:  # If the status code is not 404, re-raise the exception
+                raise
+
+            existing_contacts = None
+
+        if existing_contacts is None or len(existing_contacts.results) == 0:
         # Create a contact
-        with rate_limiter:
-            simple_public_object_input_for_create = SimplePublicObjectInputForCreate(
-                properties={
-                    "firstname": first_name,
-                    "lastname": last_name,
-                    "phone": phone_number,
-                    "address": address,
-                    "city": city,
-                    "state": state,
-                    "zip": zip_code,
-                    "bonzo_owner": assigned_to,
-                    "bonzo_create_date": created_at,
-                    "time_of_bonzo_response": event_date,
-                    "bonzo_propsect_id": prospect_id,
-                    "bonzo_lead_initial_response": content,
-                    "website": f"https://platform.getbonzo.com/prospect/{prospect_id}"
-                }
+            with rate_limiter:
+                simple_public_object_input_for_create = SimplePublicObjectInputForCreate(
+                    properties={
+                        "firstname": first_name,
+                        "lastname": last_name,
+                        "phone": phone_number,
+                        "address": address,
+                        "city": city,
+                        "state": state,
+                        "zip": zip_code,
+                        "bonzo_owner": assigned_to,
+                        "bonzo_create_date": created_at,
+                        "time_of_bonzo_response": event_date,
+                        "bonzo_propsect_id": prospect_id,
+                        "bonzo_lead_initial_response": content,
+                        "website": f"https://platform.getbonzo.com/prospect/{prospect_id}"
+                    }
         )
         api_response = client.crm.contacts.basic_api.create(
             simple_public_object_input_for_create=simple_public_object_input_for_create
