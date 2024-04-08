@@ -62,7 +62,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         client = hubspot.Client.create(access_token=access_token)
 
         # Check if a contact with the same phone number already exists
-        filter = Filter(propertyName="phone", operator="EQ", value=phone_number)
+        filter = Filter(
+            operationtype="PROPERTY", 
+            operator="IS_EQUAL_TO", 
+            includeObjectsWithNoValueSet=False, 
+            propertyName="phone",
+            value=phone_number
+        )
+        
         filter_group = FilterGroup(filters=[filter])
         search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
 
