@@ -54,7 +54,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         
         # Initialize the HubSpot API Client
         access_token = os.getenv('hubspot_privateapp_access_token')  # Modify this line
-        print(f"Access token: {access_token}")  # Add this line
         client = hubspot.Client.create(access_token=access_token)  # Modify this line
 
         # Create a list to store the captured properties
