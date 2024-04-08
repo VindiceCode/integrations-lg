@@ -63,13 +63,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # Check if a contact with the same phone number already exists
         filter = Filter(
-            operationType="PROPERTY", 
-            operator="IS_EQUAL_TO", 
-            includeObjectsWithNoValueSet=False, 
             propertyName="phone",
+            operator="EQ",
             value=phone_number
         )
-        
         filter_group = FilterGroup(filters=[filter])
         search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
 
