@@ -26,6 +26,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         state = prospect.get('state')
         zip_code = prospect.get('zip')
         assigned_to = prospect.get('assigned_to')
+        assigned_to = str(assigned_to)
         tags = prospect.get('tags')
         dnc = prospect.get('dnc')
         created_at = prospect.get('created_at')
