@@ -106,6 +106,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "bonzo_create_date": created_at,
                         "time_of_bonzo_response": event_date,
                         "bonzo_prospect_id": prospect_id,
+                        "industry": prospect_id,
                         "bonzo_lead_initial_response": content,
                         "website": f"https://platform.getbonzo.com/prospect/{prospect_id}"
                     }
