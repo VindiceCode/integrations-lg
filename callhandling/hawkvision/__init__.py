@@ -108,7 +108,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "bonzo_prospect_id": prospect_id,
                         "industry": prospect_id,
                         "bonzo_lead_initial_response": content,
-                        "website": f"https://platform.getbonzo.com/prospect/{prospect_id}"
+                        "website": f"https://platform.getbonzo.com/prospect/{prospect_id}",
+                        "annualrevenue": assigned_to,
                     }
                 )
                 api_response = client.crm.contacts.basic_api.create(
