@@ -58,9 +58,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if dnc is True:
             return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=200)
 
-        # Check if the message includes "stop" or "not interested"
-        if message is not None and ('stop' in message or 'STOP' in message or 'not interested' in message):
-            return func.HttpResponse("Message includes 'stop' or 'not interested'. Not creating a HubSpot contact.", status_code=200) 
+        # Check if the message includes "stop", "delete", or any swear words
+        if message is not None and any(word in message.lower() for word in ['stop', 'delete']) or any(swear_word in message.lower() for swear_word in ['fuck', 'fuck you', 'die']):
+            return func.HttpResponse("Message includes 'stop', 'delete', or swear words. Not creating a HubSpot contact.", status_code=200)
 
         # Create a list to store the captured properties
         captured_properties = [first_name, last_name, full_name, phone_number, address, city, state, zip_code, assigned_to, tags, dnc, created_at, updated_at, prospect_id, message]
