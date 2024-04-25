@@ -9,6 +9,7 @@ from hubspot.auth.oauth import ApiException
 import hubspot  
 import azure.functions as func
 from ratelimiter import RateLimiter
+import json
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
@@ -48,7 +49,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         content = message.get('content')
         event_date = message.get('event_date')
 
-        
+        # Convert 'content' to a string - turns message object dict > string to be used in checks
+        content_str = json.dumps(content)
 
         # Check if "Acknowledged" is in tags
         if tags is not None and "Acknowledged" in tags:
@@ -58,8 +60,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if dnc is True:
             return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=200)
 
-        # Check if the message includes "stop", "delete", or any swear words
-        if message is not None and any(word in message.lower() for word in ['stop', 'delete']) or any(swear_word in message.lower() for swear_word in ['fuck', 'fuck you', 'die']):
+        # Check if the content_str message includes "stop", "delete", or any swear words
+        if content_str is not None and any(word in content_str.lower() for word in ['stop', 'delete']) or any(swear_word in message.lower() for swear_word in ['fuck', 'fuck you', 'die']):
             return func.HttpResponse("Message includes 'stop', 'delete', or swear words. Not creating a HubSpot contact.", status_code=200)
 
         # Create a list to store the captured properties
