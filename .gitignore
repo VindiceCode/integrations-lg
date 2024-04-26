@@ -1,6 +1,6 @@
 local.settings.json
 # Virtual environment
-venv/
+.venv/
 __pycache__/
 
 # Azurite files
