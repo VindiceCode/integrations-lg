@@ -1,0 +1,6 @@
+azure-functions
+azure-storage-blob
+requests
+hubspot-api-client
+ratelimiter==1.2.0
+pytz

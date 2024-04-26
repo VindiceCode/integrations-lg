@@ -1,6 +1,5 @@
 import logging
 import os
-import csv
 import requests
 from hubspot import HubSpot
 from hubspot.crm.contacts import Filter, FilterGroup, PublicObjectSearchRequest, SimplePublicObjectInputForCreate
@@ -10,7 +9,29 @@ import hubspot
 import azure.functions as func
 from ratelimiter import RateLimiter
 import json
-import time
+from azure.cosmos import CosmosClient, exceptions  # Add this line for Cosmos DB
+
+# Set up the Cosmos DB client
+url = os.getenv('COSMOS_DB_URL')  # Environment variable for Cosmos DB URL
+key = os.getenv('COSMOS_DB_KEY')  # Environment variable for Cosmos DB key
+client = CosmosClient(url, credential=key)
+database = client.get_database_client('responsefilterdata')
+container = database.get_container_client('stagecontentvalues')
+
+
+def fetch_matching_stage(content_str, container):
+    try:
+        # Query to check for matching keywords in the message content
+        query = "SELECT c.StageName, c.InternalValue FROM c JOIN k IN c.Keywords WHERE CONTAINS(@content_str, k)"
+        items = list(container.query_items(
+            query=query,
+            parameters=[{"name": "@content_str", "value": content_str.lower()}],
+            enable_cross_partition_query=True
+        ))
+        return items
+    except exceptions.CosmosHttpResponseError as e:
+        logging.error('Cosmos DB query failed with', e)
+        return []
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
@@ -18,23 +39,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         payload = req.get_json()
         # Print the JSON payload
         print(f"Payload: {payload}")
-        prospect = payload.get('prospect')
-        first_name = prospect.get('first_name')
-        last_name = prospect.get('last_name')
-        full_name = prospect.get('full_name')
-        phone_number = prospect.get('phone')
-        address = prospect.get('address')
-        city = prospect.get('city')
-        state = prospect.get('state')
-        zip_code = prospect.get('zip')
+        prospect = payload.get('prospect', {})
+        first_name = prospect.get('first_name', '')
+        last_name = prospect.get('last_name', '')
+        full_name = prospect.get('full_name', '')
+        phone_number = prospect.get('phone', '')
+        address = prospect.get('address', '')
+        city = prospect.get('city', '')
+        state = prospect.get('state', '')
+        zip_code = prospect.get('zip', '')
         assigned_to = prospect.get('assigned_to')
         assigned_to = str(assigned_to)
-        tags = prospect.get('tags')
-        dnc = prospect.get('dnc')
-        created_at = prospect.get('created_at')
-        updated_at = prospect.get('updated_at')
-        prospect_id = prospect.get('id')
-
+        tags = prospect.get('tags', '')
+        dnc = prospect.get('dnc', '')
+        created_at = prospect.get('created_at', '')
+        updated_at = prospect.get('updated_at', '')
+        prospect_id = prospect.get('id', '')
         # Initialize a dictionary to store the associations between IDs and names
         id_to_name = {}
 
@@ -53,18 +73,24 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Convert 'content' to a string - turns message object dict > string to be used in checks
         content_str = json.dumps(content)
 
+         # Fetch matching stages from Cosmos DB
+        matching_stages = fetch_matching_stage(content_str, container)
+        if matching_stages:
+            # Log the matching stages and extract internal value for use
+            for stage in matching_stages:
+                internal_value = stage['InternalValue']
+                logging.info(f"Matching stage found: {stage['StageName']} with InternalValue: {internal_value}")
+
+        # If no Stage Matches with Keywords, set Internal_Value (Bonzo Pipeline Stage) to be "39142" (New)
+        internal_value = "39142" if not matching_stages else internal_value
+
         # Check if "Acknowledged" is in tags
         if tags is not None and "Acknowledged" in tags:
             return func.HttpResponse("Tag 'Acknowledged' found. Not creating a HubSpot contact.", status_code=200)
 
-        # Check if dnc is True
+        # Check if dnc is Trues
         if dnc is True:
             return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=200)
-
-
-        # Check if the content_str message includes "stop", "delete", or any swear words
-        if content_str is not None and any(optout_word in content_str.lower() for optout_word in ['stop', 'delete','DNC']) or any(swear_word in content_str.lower() for swear_word in ['fuck', 'fuck you', 'die', 'go to hell', 'you suck', 'remove me', 'leave me alone', "didn't give permission", 'Stop harassing', 'Do not text me', 'sketchy', 'take me off your', 'take me off list', 'take off list', 'ass', 'asshole', 'F off a hole', 'a hole', 'remove my', 'bother me', 'Do not reach out', 'Do not message', 'do not text', 'lawyer', 'sue you', 'legal action', 'fraud', 'illegal']):
-            return func.HttpResponse("Message includes 'stop', 'delete', 'dnc', or swear words. Not creating a HubSpot contact.", status_code=200)
 
         # Create a list to store the captured properties
         captured_properties = [first_name, last_name, full_name, phone_number, address, city, state, zip_code, assigned_to, tags, dnc, created_at, updated_at, prospect_id, message]
@@ -81,6 +107,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             operator="EQ",
             value=phone_number
         )
+        
         filter_group = FilterGroup(filters=[filter])
         search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
 
@@ -115,6 +142,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "bonzo_lead_initial_response": content,
                         "website": f"https://platform.getbonzo.com/prospect/{prospect_id}",
                         "annualrevenue": assigned_to,
+                        "bonzo_pipeline_stage": internal_value,
                     }
                 )
                 api_response = client.crm.contacts.basic_api.create(
