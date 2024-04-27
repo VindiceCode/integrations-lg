@@ -96,7 +96,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         captured_properties = [first_name, last_name, full_name, phone_number, address, city, state, zip_code, assigned_to, tags, dnc, created_at, updated_at, prospect_id, message]
         
         # Create a RateLimiter instance
-        rate_limiter = RateLimiter(max_calls=4, period=1)
+        rate_limiter_4_1 = RateLimiter(max_calls=4, period=1)
+        rate_limiter_150_10 = RateLimiter(max_calls=150, period=10)
          # Initialize the HubSpot API Client
         access_token = os.getenv('hubspot_privateapp_access_token')
         client = hubspot.Client.create(access_token=access_token)
@@ -112,7 +113,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
 
         try:
-            with rate_limiter:
+            with rate_limiter_4_1:
                 existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
         except ApiException as e:
             if e.status != 404:  # If the status code is not 404, re-raise the exception
@@ -122,7 +123,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         if existing_contacts is None or len(existing_contacts.results) == 0:
         # Create a contact
-            with rate_limiter:
+            with rate_limiter_150_10:
                 # Assume assigned_to is a unique ID
                 assigned_to_name = id_to_name[assigned_to]
                 simple_public_object_input_for_create = SimplePublicObjectInputForCreate(
