@@ -18,7 +18,7 @@ STAGE_MAPPINGS = {
         "InternalValue": 177397,
         "Keywords": [
             "opt me out", "opt us out", "stop", "opt out", "do not contact",
-            "don't contact", "stop!", "shtop", "dnc", "delete", "delete", "dnc","please remove"
+            "don't contact", "stop!", "shtop", "dnc", "delete", "delete", "dnc","please remove","don't text", "don't message", "don't call", "don't text me", "don't message me", "don't call me", "don't contact me", "don't reach out"
         ]
     },
     "Do not want a response": {
