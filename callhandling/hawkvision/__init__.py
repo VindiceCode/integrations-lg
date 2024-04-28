@@ -14,8 +14,8 @@ from azure.cosmos import CosmosClient, exceptions  # Add this line for Cosmos DB
 # Define keyword mappings to internal values
 STAGE_MAPPINGS = {
     #OptOut Comes First to ensure DNC Terms Prioritized
-    "Opt Out": {
-        "InternalValue": 170389,
+    "Hard DNC Language": {
+        "InternalValue": 177397,
         "Keywords": [
             "opt me out", "opt us out", "stop", "opt out", "do not contact",
             "don't contact", "stop!", "shtop", "dnc", "delete", "delete", "dnc","please remove"
