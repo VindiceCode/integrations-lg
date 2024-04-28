@@ -11,27 +11,43 @@ from ratelimiter import RateLimiter
 import json
 from azure.cosmos import CosmosClient, exceptions  # Add this line for Cosmos DB
 
-# Set up the Cosmos DB client
-url = os.getenv('COSMOS_DB_URL')  # Environment variable for Cosmos DB URL
-key = os.getenv('COSMOS_DB_KEY')  # Environment variable for Cosmos DB key
-client = CosmosClient(url, credential=key)
-database = client.get_database_client('responsefilterdata')
-container = database.get_container_client('stagecontentvalues')
-
-
-def fetch_matching_stage(content_str, container):
-    try:
-        # Query to check for matching keywords in the message content
-        query = "SELECT c.StageName, c.InternalValue FROM c JOIN k IN c.Keywords WHERE CONTAINS(@content_str, k)"
-        items = list(container.query_items(
-            query=query,
-            parameters=[{"name": "@content_str", "value": content_str.lower()}],
-            enable_cross_partition_query=True
-        ))
-        return items
-    except exceptions.CosmosHttpResponseError as e:
-        logging.error('Cosmos DB query failed with', e)
-        return []
+# Define keyword mappings to internal values
+STAGE_MAPPINGS = {
+    "Do not want a response": {
+        "InternalValue": 170389,
+        "Keywords": [
+            "go to hell", "fuck", "you suck", "remove me", "leave me alone",
+            "didn't give permission", "stop harassing", "do not text me",
+            "sketchy", "take me off your", "take me off list", "take off list",
+            "ass", "asshole", "f off a hole", "a hole", "remove my", "bother me",
+            "do not reach out", "do not message", "do not text", "lawyer", "sue you",
+            "legal action", "fraud", "illegal"
+        ]
+    },
+    "Not Interested": {
+        "InternalValue": 39140,
+        "Keywords": [
+            "no thank you", "no", "you are spam", "i'm not interested, thank you",
+            "all good", "i'm okay", "i'm all set thank you", "u+1f44e",
+            "i'm not looking for a mortgage", "no thanks", "no thanks all set",
+            "no thx", "why are you texting me? i'm set up already. thks",
+            "i'm looking into that right now", "i do not need your services",
+            "hi, i don't. thanks", "all set, ty", "i do not need any services. thank you",
+            "don't need ya", "neither one i'm good thank you", "i don't need a new mortgage",
+            "not interested", "i'm not looking to refi or purchase", "i am now longer taking estimates",
+            "not looking for new home options", "how about no", "we are all set",
+            "have everything covered", "we are good", "do not need your services",
+            "i am good for now", "isn't something i'd like to do"
+        ]
+    },
+    "Opt Out": {
+        "InternalValue": 170389,
+        "Keywords": [
+            "opt me out", "opt us out", "stop", "opt out", "do not contact",
+            "don't contact", "stop!", "shtop", "dnc", "delete", "delete", "dnc","please remove"
+        ]
+    }
+}
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
@@ -71,18 +87,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         event_date = message.get('event_date')
 
         # Convert 'content' to a string - turns message object dict > string to be used in checks
-        content_str = json.dumps(content)
-
-         # Fetch matching stages from Cosmos DB
-        matching_stages = fetch_matching_stage(content_str, container)
-        if matching_stages:
-            # Log the matching stages and extract internal value for use
-            for stage in matching_stages:
-                internal_value = stage['InternalValue']
-                logging.info(f"Matching stage found: {stage['StageName']} with InternalValue: {internal_value}")
-
-        # If no Stage Matches with Keywords, set Internal_Value (Bonzo Pipeline Stage) to be "39142" (New)
-        internal_value = "39142" if not matching_stages else internal_value
+        content_str = json.dumps(content).lower()
 
         # Check if "Acknowledged" is in tags
         if tags is not None and "Acknowledged" in tags:
@@ -91,7 +96,21 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Check if dnc is Trues
         if dnc is True:
             return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=200)
+        
+        # Default internal value
+        internal_value = "39142"  # Default internal value if no keyword matches
+        for stage_name, stage_info in STAGE_MAPPINGS.items():
+            for keyword in stage_info["Keywords"]:
+                if keyword.lower() in content_str:
+                    internal_value = stage_info["InternalValue"]
+                    logging.info(f"Keyword '{keyword}' matched with stage '{stage_name}' with InternalValue: {internal_value}")
+                    break
+            else:
+                continue  # only executed if the inner loop did NOT break
+            break  # first break exits the inner loop, this break exits the outer loop
 
+        logging.info(f"Proceeding with contact creation/update with InternalValue: {internal_value}")
+        
         # Create a list to store the captured properties
         captured_properties = [first_name, last_name, full_name, phone_number, address, city, state, zip_code, assigned_to, tags, dnc, created_at, updated_at, prospect_id, message]
         
@@ -123,6 +142,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         if existing_contacts is None or len(existing_contacts.results) == 0:
         # Create a contact
+
             with rate_limiter_150_10:
                 # Assume assigned_to is a unique ID
                 assigned_to_name = id_to_name[assigned_to]
