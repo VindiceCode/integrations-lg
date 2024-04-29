@@ -9,10 +9,9 @@ import hubspot
 import azure.functions as func
 from ratelimiter import RateLimiter
 import json
-from azure.cosmos import CosmosClient, exceptions  # Add this line for Cosmos DB
 
 # Define keyword mappings to internal values
-STAGE_MAPPINGS = {
+CONTENT_SOFT_MATCH_STAGES = {
     #OptOut Comes First to ensure DNC Terms Prioritized
     "Hard DNC Language": {
         "InternalValue": 177397,
@@ -21,17 +20,50 @@ STAGE_MAPPINGS = {
             "don't contact", "stop!", "shtop", "dnc", "delete", "delete", "dnc","please remove","don't text", "don't message", "don't call", "don't text me", "don't message me", "don't call me", "don't contact me", "don't reach out"
         ]
     },
+    "Wrong Number": {
+        "InternalValue": 170391,
+        "Keywords": [
+            "wrong number", "this is not", "this isn't"
+        ]
+    },
     "Do not want a response": {
         "InternalValue": 170389,
         "Keywords": [
-            "go to hell", "fuck", "you suck", "remove me", "leave me alone",
+            "hell", "fuck", "suck", "remove", "leave alone",
             "didn't give permission", "stop harassing", "do not text me",
             "sketchy", "take me off your", "take me off list", "take off list",
-            "ass", "asshole", "f off a hole", "a hole", "remove my", "bother me",
-            "do not reach out", "do not message", "do not text", "lawyer", "sue you",
+            "ass", "asshole", "f off", "asshole", "remove my", "bother me",
+            "reach out", "do not message", "do not text", "lawyer", "sue",
             "legal action", "fraud", "illegal"
         ]
     },
+    "Land Loan": {
+        "InternalValue": 170388,
+        "Keywords": [
+            "land loan", "land"
+        ]
+    },
+     "Ask For LE / Already in Process": {
+        "InternalValue": 104247,
+        "Keywords": [
+            "locked", "contract", "closing date", "closing"
+        ]
+    },
+    "HELOC / No Cash-Out Intention": {
+        "InternalValue": 39143,
+        "Keywords": [
+            "HELOC", "HELOAN", "Equity Line"
+        ]
+    },
+    "Spanish": {
+        "InternalValue": 170449,
+        "Keywords": [
+            "habla", "Espanol", "ITIN", "Spanish"
+        ]
+    }
+}
+
+CONTENT_HARD_MATCH_STAGES = {
     "Not Interested": {
         "InternalValue": 39140,
         "Keywords": [
@@ -42,7 +74,7 @@ STAGE_MAPPINGS = {
             "i'm looking into that right now", "i do not need your services",
             "hi, i don't. thanks", "all set, ty", "i do not need any services. thank you",
             "don't need ya", "neither one i'm good thank you", "i don't need a new mortgage",
-            "not interested", "i'm not looking to refi or purchase", "i am now longer taking estimates",
+            "not interested", "i'm not looking to refi or purchase", "i am no longer taking estimates",
             "not looking for new home options", "how about no", "we are all set",
             "have everything covered", "we are good", "do not need your services",
             "i am good for now", "isn't something i'd like to do"
@@ -90,34 +122,39 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Convert 'content' to a string - turns message object dict > string to be used in checks
         content_str = json.dumps(content).lower()
 
-        # Check if "Acknowledged" is in tags
-        if tags is not None and "Acknowledged" in tags:
-            return func.HttpResponse("Tag 'Acknowledged' found. Not creating a HubSpot contact.", status_code=200)
-
         # Check if dnc is Trues
         if dnc is True:
             return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=200)
         
         # Default internal value
         internal_value = "39142"  # Default internal value if no keyword matches
-        for stage_name, stage_info in STAGE_MAPPINGS.items():
+        for stage_name, stage_info in CONTENT_SOFT_MATCH_STAGES.items():
             for keyword in stage_info["Keywords"]:
                 if keyword.lower() in content_str:
                     internal_value = stage_info["InternalValue"]
-                    logging.info(f"Keyword '{keyword}' matched with stage '{stage_name}' with InternalValue: {internal_value}")
+                    logging.info(f"Keyword '{keyword}' Hard matched with stage '{stage_name}' with InternalValue: {internal_value}")
                     break
             else:
                 continue  # only executed if the inner loop did NOT break
             break  # first break exits the inner loop, this break exits the outer loop
+
+        if internal_value == "39142":
+            for stage_name, stage_info in CONTENT_HARD_MATCH_STAGES.items():
+                for keyword in stage_info["Keywords"]:
+                    if content_str in keyword.lower():
+                        internal_value = stage_info["InternalValue"]
+                        logging.info(f"Keyword '{keyword}' Soft matched with stage '{stage_name}' with InternalValue: {internal_value}")
+                        break
+                else:
+                    continue  # only executed if the inner loop did NOT break
+                break  # first break exits the inner loop, this break exits the outer loop
 
         logging.info(f"Proceeding with contact creation/update with InternalValue: {internal_value}")
         
         # Create a list to store the captured properties
         captured_properties = [first_name, last_name, full_name, phone_number, address, city, state, zip_code, assigned_to, tags, dnc, created_at, updated_at, prospect_id, message]
         
-        # Create a RateLimiter instance
-        rate_limiter_4_1 = RateLimiter(max_calls=4, period=1)
-        rate_limiter_150_10 = RateLimiter(max_calls=150, period=10)
+
          # Initialize the HubSpot API Client
         access_token = os.getenv('hubspot_privateapp_access_token')
         client = hubspot.Client.create(access_token=access_token)
@@ -133,13 +170,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
 
         try:
+            #Initialize a Rate Limiter Instance for Hubspot Search 4_1 API Limits
+            rate_limiter_4_1 = RateLimiter(max_calls=4, period=1)
             with rate_limiter_4_1:
                 existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
         except ApiException as e:
             if e.status != 404:  # If the status code is not 404, re-raise the exception
                 raise
 
-            existing_contacts = None
+        # Create a RateLimiter instance
+        rate_limiter_150_10 = RateLimiter(max_calls=150, period=10)
+        existing_contacts = None
 
         if existing_contacts is None or len(existing_contacts.results) == 0:
         # Create a contact
