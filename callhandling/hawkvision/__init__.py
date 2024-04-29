@@ -11,7 +11,7 @@ from ratelimiter import RateLimiter
 import json
 
 # Define keyword mappings to internal values
-CONTENT_SOFT_MATCH_STAGES = {
+CONTENT_HARD_MATCH_STAGES = {
     #OptOut Comes First to ensure DNC Terms Prioritized
     "Hard DNC Language": {
         "InternalValue": 177397,
@@ -60,10 +60,7 @@ CONTENT_SOFT_MATCH_STAGES = {
         "Keywords": [
             "habla", "Espanol", "ITIN", "Spanish"
         ]
-    }
-}
-
-CONTENT_HARD_MATCH_STAGES = {
+    },
     "Not Interested": {
         "InternalValue": 39140,
         "Keywords": [
@@ -80,6 +77,9 @@ CONTENT_HARD_MATCH_STAGES = {
             "i am good for now", "isn't something i'd like to do", "not interested"
         ]
     }
+}
+
+CONTENT_STRICT_MATCH_STAGES = {
 }
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -128,7 +128,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         
         # Default internal value
         internal_value = "39142"  # Default internal value if no keyword matches
-        for stage_name, stage_info in CONTENT_SOFT_MATCH_STAGES.items():
+        for stage_name, stage_info in CONTENT_HARD_MATCH_STAGES.items():
             for keyword in stage_info["Keywords"]:
                 if keyword.lower() in content_str:
                     internal_value = stage_info["InternalValue"]
@@ -139,7 +139,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             break  # first break exits the inner loop, this break exits the outer loop
 
         if internal_value == "39142":
-            for stage_name, stage_info in CONTENT_HARD_MATCH_STAGES.items():
+            for stage_name, stage_info in CONTENT_STRICT_MATCH_STAGES.items():
                 for keyword in stage_info["Keywords"]:
                     if content_str in keyword.lower():
                         internal_value = stage_info["InternalValue"]
