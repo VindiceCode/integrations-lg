@@ -77,7 +77,7 @@ CONTENT_HARD_MATCH_STAGES = {
             "not interested", "i'm not looking to refi or purchase", "i am no longer taking estimates",
             "not looking for new home options", "how about no", "we are all set",
             "have everything covered", "we are good", "do not need your services",
-            "i am good for now", "isn't something i'd like to do"
+            "i am good for now", "isn't something i'd like to do", "not interested"
         ]
     }
 }
