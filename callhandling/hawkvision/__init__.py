@@ -128,13 +128,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
          # Check if tags is 'Acknowledged'
         if tags == 'Acknowledged':
             return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
-        
-        # Convert 'content' to a string - turns message object dict > string to be used in checks
-        content_str = json.dumps(content).lower()
-        #Remove non-ascii characters from content like hyphens
+        #Transform Message Content into ascii string
         import re
-        ascii_content = re.sub(r'[^\x00-\x7F]+', '_', content_str)
-
+        ascii_content = re.sub(r'[^\x00-\x7F]+', '_', content)
+        
         # Check if dnc is Trues
         if dnc is True:
             return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=200)
@@ -145,7 +142,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             for keyword in stage_info["Keywords"]:
                 import re
                 pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
-                if re.search(pattern, ascii_content):
+                if re.search(pattern, ascii_content.lower()):
                     internal_value = stage_info["InternalValue"]
                     logging.info(f"Keyword '{keyword}' Hard matched with stage '{stage_name}' with InternalValue: {internal_value}")
                     break
@@ -173,20 +170,24 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         
         filter_group = FilterGroup(filters=[filter])
         search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
-
         try:
-            #Initialize a Rate Limiter Instance for Hubspot Search 4_1 API Limits
+            # Initialize a Rate Limiter Instance for Hubspot Search 4_1 API Limits
             rate_limiter_4_1 = RateLimiter(max_calls=4, period=1)
             with rate_limiter_4_1:
-                 existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
+                existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
+                
+                # Check if existing contacts were found
+                if existing_contacts and existing_contacts.total > 0:
+                    return func.HttpResponse("Contact already exists.", status_code=200)
         except ApiException as e:
             if e.status != 404:  # If the status code is not 404, re-raise the exception
-                raise  
+                raise
 
         # Create a RateLimiter instance
         rate_limiter_150_10 = RateLimiter(max_calls=150, period=10)
         existing_contacts = None
 
+    
         if existing_contacts is None or len(existing_contacts.results) == 0:
         # Create a contact
 
@@ -236,4 +237,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     
     except ApiException as ae:
         logging.error(f"ApiException: {str(ae)}")
-        return func.HttpResponse("An error occurred while creating the contact in HubSpot", status_code=500)
+        return func.HttpResponse("An error occurred while creating the contact in HubSpot", status_code=500)(
+
+        )
