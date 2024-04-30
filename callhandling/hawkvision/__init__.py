@@ -9,8 +9,7 @@ import hubspot
 import azure.functions as func
 from ratelimiter import RateLimiter
 import json
-from filelock import FileLock
-from filelock import Timeout
+
 
 # Define keyword mappings to internal values
 CONTENT_HARD_MATCH_STAGES = {
@@ -121,8 +120,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         content = message.get('content')
         event_date = message.get('event_date')
 
-        # Convert 'content' to a string - turns message object dict > string to be used in checks
-
         # Check if tags is 'acknowledged'
         if tags == 'acknowledged':
             return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
@@ -130,8 +127,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
          # Check if tags is 'Acknowledged'
         if tags == 'Acknowledged':
             return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
-
+        
+        # Convert 'content' to a string - turns message object dict > string to be used in checks
         content_str = json.dumps(content).lower()
+        
 
         # Check if dnc is Trues
         if dnc is True:
@@ -171,9 +170,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         access_token = os.getenv('hubspot_privateapp_access_token')
         client = hubspot.Client.create(access_token=access_token)
 
-         # Create a FileLock instance After Passing Basic Validation Checks (Tags, DNC, Etc.)
-        lock = FileLock("contact_creation.lock")
-
         # Check if a contact with the same phone number already exists
         filter = Filter(
             property_name="phone",
@@ -185,16 +181,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
 
         try:
-            with lock.acquire(timeout=10):  # Wait for at most 10 seconds to acquire the lock
             #Initialize a Rate Limiter Instance for Hubspot Search 4_1 API Limits
-                rate_limiter_4_1 = RateLimiter(max_calls=4, period=1)
-                with rate_limiter_4_1:
-                    existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
+            rate_limiter_4_1 = RateLimiter(max_calls=4, period=1)
+            with rate_limiter_4_1:
+                 existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
         except ApiException as e:
             if e.status != 404:  # If the status code is not 404, re-raise the exception
-                raise
-        except Timeout:
-            print("Failed to acquire lock within 10 seconds.")   
+                raise  
 
         # Create a RateLimiter instance
         rate_limiter_150_10 = RateLimiter(max_calls=150, period=10)
