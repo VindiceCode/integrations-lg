@@ -145,7 +145,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             for keyword in stage_info["Keywords"]:
                 import re
                 pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
-                if re.search(pattern, content_str):
+                if re.search(pattern, ascii_content):
                     internal_value = stage_info["InternalValue"]
                     logging.info(f"Keyword '{keyword}' Hard matched with stage '{stage_name}' with InternalValue: {internal_value}")
                     break
