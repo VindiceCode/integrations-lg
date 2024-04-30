@@ -11,6 +11,7 @@ from ratelimiter import RateLimiter
 import json
 
 
+
 # Define keyword mappings to internal values
 CONTENT_HARD_MATCH_STAGES = {
     #OptOut Comes First to ensure DNC Terms Prioritized
@@ -130,7 +131,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         
         # Convert 'content' to a string - turns message object dict > string to be used in checks
         content_str = json.dumps(content).lower()
-        
+        #Remove non-ascii characters from content like hyphens
+        import re
+        ascii_content = re.sub(r'[^\x00-\x7F]+', '_', content_str)
 
         # Check if dnc is Trues
         if dnc is True:
@@ -140,24 +143,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         internal_value = "39142"  # Default internal value if no keyword matches
         for stage_name, stage_info in CONTENT_HARD_MATCH_STAGES.items():
             for keyword in stage_info["Keywords"]:
-                if keyword.lower() in content_str:
+                import re
+                pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
+                if re.search(pattern, content_str):
                     internal_value = stage_info["InternalValue"]
                     logging.info(f"Keyword '{keyword}' Hard matched with stage '{stage_name}' with InternalValue: {internal_value}")
                     break
             else:
                 continue  # only executed if the inner loop did NOT break
             break  # first break exits the inner loop, this break exits the outer loop
-
-        if internal_value == "39142":
-            for stage_name, stage_info in CONTENT_STRICT_MATCH_STAGES.items():
-                for keyword in stage_info["Keywords"]:
-                    if content_str in keyword.lower():
-                        internal_value = stage_info["InternalValue"]
-                        logging.info(f"Keyword '{keyword}' Soft matched with stage '{stage_name}' with InternalValue: {internal_value}")
-                        break
-                else:
-                    continue  # only executed if the inner loop did NOT break
-                break  # first break exits the inner loop, this break exits the outer loop
 
         logging.info(f"Proceeding with contact creation/update with InternalValue: {internal_value}")
         
@@ -213,7 +207,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "time_of_bonzo_response": event_date,
                         "bonzo_prospect_id": prospect_id,
                         "industry": prospect_id,
-                        "bonzo_lead_initial_response": content,
+                        "bonzo_lead_initial_response": ascii_content,
                         "website": f"https://platform.getbonzo.com/prospect/{prospect_id}",
                         "annualrevenue": assigned_to,
                         "bonzo_pipeline_stage": internal_value,
