@@ -9,6 +9,8 @@ import hubspot
 import azure.functions as func
 from ratelimiter import RateLimiter
 import json
+from filelock import FileLock
+from filelock import Timeout
 
 # Define keyword mappings to internal values
 CONTENT_HARD_MATCH_STAGES = {
@@ -66,7 +68,7 @@ CONTENT_HARD_MATCH_STAGES = {
         "Keywords": [
             "no thank you", "no", "you are spam", "i'm not interested, thank you",
             "all good", "i'm okay", "i'm all set thank you", "u+1f44e",
-            "i'm not looking for a mortgage", "no thanks", "no thanks all set",
+            "i'm not looking for a mortgage", "all set",
             "no thx", "why are you texting me? i'm set up already. thks",
             "i'm looking into that right now", "i do not need your services",
             "hi, i don't. thanks", "all set, ty", "i do not need any services. thank you",
@@ -120,6 +122,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         event_date = message.get('event_date')
 
         # Convert 'content' to a string - turns message object dict > string to be used in checks
+
+        # Check if tags is 'acknowledged'
+        if tags == 'acknowledged':
+            return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
+        
+         # Check if tags is 'Acknowledged'
+        if tags == 'Acknowledged':
+            return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
+
         content_str = json.dumps(content).lower()
 
         # Check if dnc is Trues
@@ -151,6 +162,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         logging.info(f"Proceeding with contact creation/update with InternalValue: {internal_value}")
         
+
         # Create a list to store the captured properties
         captured_properties = [first_name, last_name, full_name, phone_number, address, city, state, zip_code, assigned_to, tags, dnc, created_at, updated_at, prospect_id, message]
         
@@ -158,6 +170,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
          # Initialize the HubSpot API Client
         access_token = os.getenv('hubspot_privateapp_access_token')
         client = hubspot.Client.create(access_token=access_token)
+
+         # Create a FileLock instance After Passing Basic Validation Checks (Tags, DNC, Etc.)
+        lock = FileLock("contact_creation.lock")
 
         # Check if a contact with the same phone number already exists
         filter = Filter(
@@ -170,13 +185,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
 
         try:
+            with lock.acquire(timeout=10):  # Wait for at most 10 seconds to acquire the lock
             #Initialize a Rate Limiter Instance for Hubspot Search 4_1 API Limits
-            rate_limiter_4_1 = RateLimiter(max_calls=4, period=1)
-            with rate_limiter_4_1:
-                existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
+                rate_limiter_4_1 = RateLimiter(max_calls=4, period=1)
+                with rate_limiter_4_1:
+                    existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
         except ApiException as e:
             if e.status != 404:  # If the status code is not 404, re-raise the exception
                 raise
+        except Timeout:
+            print("Failed to acquire lock within 10 seconds.")   
 
         # Create a RateLimiter instance
         rate_limiter_150_10 = RateLimiter(max_calls=150, period=10)
