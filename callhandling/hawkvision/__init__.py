@@ -110,7 +110,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         id_to_name = {}
 
         # Assume you have a list of tuples, where each tuple contains a unique ID and a name
-        associations = [("6387", "Joe Prepolec"), ("6416", "Chaz Wenzel"), ("21999", "Chaz Wenzel"), ("22000", "Chaz Wenzel"), ("22001", "Chaz Wenzel"), ("22002", "Chaz Wenzel"), ("22003", "Chaz Wenzel"), ("22009", "Chaz Wenzel"), ("22004", "Chaz Wenzel"), ("14138", "Corie Walker"), ("21799", "Corie Walker"), ("22011", "Corie Walker"), ("22012", "Corie Walker"), ("22013", "Corie Walker"), ("22014", "Corie Walker"), ("22015", "Corie Walker"), ("22016", "Corie Walker"), ("22017", "Corie Walker"), ("11126", "Dani Hardy"), ("21798", "Dani Hardy"), ("22025", "Dani Hardy"), ("22026", "Dani Hardy"), ("22027", "Dani Hardy"), ("22028", "Dani Hardy"), ("22029", "Dani Hardy"), ("22030", "Dani Hardy"), ("22031", "Dani Hardy"), ("16469", "Eric Rayner"), ("21800", "Eric Rayner"), ("22034", "Eric Rayner"), ("22035", "Eric Rayner"), ("22037", "Eric Rayner"), ("22038", "Eric Rayner"), ("22039", "Eric Rayner"), ("22040", "Eric Rayner"), ("22041", "Eric Rayner"), ("18220", "Evan Walker"), ("21801", "Evan Walker"), ("22053", "Evan Walker"), ("22054", "Evan Walker"), ("22055", "Evan Walker"), ("22056", "Evan Walker"), ("22057", "Evan Walker"), ("22058", "Evan Walker"), ("22059", "Evan Walker"), ("18221", "Ian Evans"), ("21802", "Ian Evans"), ("22045", "Ian Evans"), ("22046", "Ian Evans"), ("22047", "Ian Evans"), ("22048", "Ian Evans"), ("22049", "Ian Evans"), ("22050", "Ian Evans"), ("22051", "Ian Evans"), ("7395", "Ian Melchor"), ("21795", "Ian Melchor"), ("22063", "Ian Melchor"), ("22064", "Ian Melchor"), ("22065", "Ian Melchor"), ("22066", "Ian Melchor"), ("22067", "Ian Melchor"), ("22068", "Ian Melchor"), ("22069", "Ian Melchor"), ("11125", "Kemuel Veloz"), ("21797", "Kemuel Veloz"), ("22074", "Kemuel Veloz"), ("22075", "Kemuel Veloz"), ("22076", "Kemuel Veloz"), ("22077", "Kemuel Veloz"), ("22078", "Kemuel Veloz"), ("22079", "Kemuel Veloz"), ("6413", "Melanie Trinh"), ("9934", "Sean Muscaro")]
+        associations = [
+            (6413, 'Melanie Trinh'),
+            (6416, 'Chaz Wenzel'),
+            (7395, 'Ian Melchor'),
+            (9934, 'Sean Muscaro'),
+            (11125, 'Kemuel Veloz'),
+            (11126, 'Dani Hardy'),
+            (14138, 'Corinne Walker'),
+            (16469, 'Eric Rayner'),
+            (18220, 'Evan Walker'),
+            (18221, 'Ian Evans')
+        ]
         # Populate the dictionary with the associations
         for id, name in associations:
             id_to_name[id] = name
@@ -211,7 +222,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "bonzo_lead_initial_response": ascii_content,
                         "website": f"https://platform.getbonzo.com/prospect/{prospect_id}",
                         "annualrevenue": assigned_to,
-                        "numemployees": internal_value,
+                        "bonzo_pipeline_stage": internal_value,
                     }
                 )
                 api_response = client.crm.contacts.basic_api.create(
