@@ -111,20 +111,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # Assume you have a list of tuples, where each tuple contains a unique ID and a name
         associations = [
-            ('6413', 'Melanie Trinh'),
-            ('6416', 'Chaz Wenzel'),
-            ('7395', 'Ian Melchor'),
-            ('9934', 'Sean Muscaro'),
-            ('11125', 'Kemuel Veloz'),
-            ('11126', 'Dani Hardy'),
-            ('14138', 'Corinne Walker'),
-            ('16469', 'Eric Rayner'),
-            ('18220', 'Evan Walker'),
-            ('18221', 'Ian Evans')
+            (6413, 'Melanie Trinh'),
+            (6416, 'Chaz Wenzel'),
+            (7395, 'Ian Melchor'),
+            (9934, 'Sean Muscaro'),
+            (11125, 'Kemuel Veloz'),
+            (11126, 'Dani Hardy'),
+            (14138, 'Corinne Walker'),
+            (16469, 'Eric Rayner'),
+            (18220, 'Evan Walker'),
+            (18221, 'Ian Evans')
         ]
         # Populate the dictionary with the associations
         for id, name in associations:
-            id_to_name[str(id)] = name
             id_to_name[id] = name
 
         #Access the Additional Top-End Object and Message Objects
@@ -205,13 +204,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             with rate_limiter_150_10:
                 # Assume assigned_to is a unique ID
-                if assigned_to in id_to_name:
-                    assigned_to_name = id_to_name[assigned_to]
-                    logging.info(f"Assigned to name: {assigned_to_name}")
-                else:
-                    logging.warning(f"Assigned to ID {assigned_to} not found in the dictionary")
-                    return func.HttpResponse(f"Assigned to ID {assigned_to} not found in the dictionary", status_code=400)
-                logging.info(f"Assigned to name: {assigned_to_name}")
+                assigned_to_name = id_to_name[assigned_to]
                 simple_public_object_input_for_create = SimplePublicObjectInputForCreate(
                     properties={
                         "firstname": first_name,
