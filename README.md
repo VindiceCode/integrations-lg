@@ -1,4 +1,4 @@
-Ideal Integrations Project File Structure Psuedocode:
+Ideal Integrations Project File Structure Psuedocode (Click "Edit" to see it formatted correctly"
 
 VindiceCode/
   ├── integrations-lg/
