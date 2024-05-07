@@ -1,12 +1,23 @@
-Hawkvision (incoming SMS) Ideal Project Structure
+Ideal Integrations Project File Structure Psuedocode:
 
+VindiceCode/
+  ├── integrations-lg/
+  │   ├── smshandling/
+  │   │   ├── incomingsms/
+  │   │   │   ├── __init__.py
+  │   │   │   └── sms_in_main.py
+  │   │   ├── outgoingsms/
+  │   │   │   ├── __init__.py
+  │   │   │   └── sms_out_main.py
+  │   │   ├── utils.py
+  │   │   ├── constants.py
+  │   │   ├── rate_limiter.py
+  │   │   ├── hubspot_client.py
+  │   │   ├── host.json
+  │   │   └── requirements.txt
+  │   └── ...
+  └── ...
 
-/my_project
-|-- main.py
-|-- utils.py
-|-- constants.py
-|-- rate_limiter.py
-|-- hubspot_client.py
 
 constants.py
 ----------
