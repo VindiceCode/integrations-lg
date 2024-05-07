@@ -1,4 +1,4 @@
-Ideal Project Structure
+Hawkvision (incoming SMS) Ideal Project Structure
 
 
 /my_project
