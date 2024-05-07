@@ -6,26 +6,60 @@ Pseudocode structure:
 │ ├── smshandling/
 │ │ ├── incomingsms/
 │ │ │ ├── __init__.py
-│ │ │ ├── sms_in_initialreply/
+│ │ │ ├── sms_in_processing/
 │ │ │ │ ├── __init__.py
-│ │ │ │ └── sms_in_initialreply_logic.py 
-│ │ │ ├── sms_in_hscontact/
+│ │ │ │ ├── new_contact.py (logic for handling new contacts)
+│ │ │ │ └── existing_contact/
 │ │ │ │ ├── __init__.py
-│ │ │ │ └── sms_in_hscontact_logic.py 
-│ │ │ ├── sms_in_pipeline_stage/
-│ │ │ │ ├── __init__.py
-│ │ │ │ └── sms_in_pipeline_stage_logic.py 
+│ │ │ │ ├── general_updates.py (logic for handling general updates for existing contacts)
 │ │ │ ├── function.json
+
 │ │ ├── outgoingsms/
 │ │ │ ├── __init__.py
-│ │ │ ├── sms_out_main/
+│ │ │ ├── sms_out_processing/
 │ │ │ │ ├── __init__.py
-│ │ │ │ └── sms_out_main_logic.py 
+│ │ │ │ ├── contact_update_util.py (logic for updating contact information using utils)
+│ │ │ │ ├── log_sms_to_hubspot.py (logic for logging SMS to Hubspot CRM)
+│ │ │ │ ├── message_delivery_check.py (logic for checking if the message is delivered)
+│ │ │ │ ├── error_handling.py (logic for handling errors when the message is not delivered)
 │ │ │ ├── function.json
-│ │ ├── utils.py
+
+│ │ ├── utils/
+│ │ │ ├── __init__.py
+│ │ │ ├── data_mapping.py/
+│ │ │ │ ├── __init__.py
+│ │ │ │ ├── format_sms_content.py (function for formatting SMS content)
+│ │ │ │ ├── format_date_time.py (function for formatting date and time)
+│ │ │ │ ├── check_assigned_user.py (function for checking the assigned user)
+│ │ │ │ ├── check_campaigns.py (function for checking campaigns)
+│ │ │ │ ├── last_response_check.py (function for checking the last response)
+│ │ │ │ ├── last_contact.py (function for checking the last contact)
+│ │ │ │ ├── created_at_check.py (function for checking the created_at timestamp)
+│ │ │ │ ├── updated_at_check.py (function for checking the updated_at timestamp)
+│ │ │ │ └── check_email.py (function for checking the email)
+│ │ │ ├── data_syncing.py/
+│ │ │ │ ├── __init__.py
+│ │ │ │ ├── fetch_hs_contact_id.py (function for fetching contact ID by phone number)
+│ │ │ │ ├── sync_contact_properties.py (function for syncing contact properties)
+│ │ │ │ ├── sync_deal_properties.py (function for syncing deal properties)
+│ │ │ │ ├── sync_engagements.py (function for syncing engagements)
+│ │ │ ├── hubspot_operations.py/
+│ │ │ │ ├── __init__.py
+│ │ │ │ ├── create_contact.py (function for creating a contact in Hubspot)
+│ │ │ │ ├── update_contact.py (function for updating a contact in Hubspot)
+│ │ │ │ ├── create_deal.py (function for creating a deal in Hubspot)
+│ │ │ │ ├── update_deal.py (function for updating a deal in Hubspot)
+│ │ │ ├── bonzo_operations.py/
+│ │ │ │ ├── __init__.py
+│ │ │ │ ├── create_contact.py (function for creating a contact in Bonzo)
+│ │ │ │ ├── update_contact.py (function for updating a contact in Bonzo)
+│ │ │ ├── pipeline_stage_management.py (functions for handling and updating pipeline stages)
+│ │ │ ├── contact_checks.py (functions for checking contact properties, including DNC)
+│ │ │ | _______
+
+
 │ │ ├── constants.py
 │ │ ├── rate_limiter.py
-│ │ ├── hubspot_client.py
 │ │ ├── host.json
 │ │ └── requirements.txt
 │ └── ...
