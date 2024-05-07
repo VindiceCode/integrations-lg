@@ -1,24 +1,38 @@
 Ideal Integrations Project File Structure Psuedocode (Click "Edit" to see it formatted correctly"
 
-VindiceCode/
-  ├── integrations-lg/
-  │   ├── smshandling/
-  │   │   ├── incomingsms/
-  │   │   │   ├── __init__.py
-  │   │   │   └── sms_in_main.py
-  |   |   |   |___ function.json
-  │   │   ├── outgoingsms/
-  │   │   │   ├── __init__.py
-  │   │   │   └── sms_out_main.py
-  |   |   |   |___ function.json
-  │   │   ├── utils.py
-  │   │   ├── constants.py
-  │   │   ├── rate_limiter.py
-  │   │   ├── hubspot_client.py
-  │   │   ├── host.json
-  │   │   └── requirements.txt
-  │   └── ...
-  └── ...
+Pseudocode structure:
+
+├── integrations-lg/
+│ ├── smshandling/
+│ │ ├── incomingsms/
+│ │ │ ├── __init__.py
+│ │ │ ├── sms_in_initialreply/
+│ │ │ │ ├── __init__.py
+│ │ │ │ └── sms_in_initialreply_logic.py 
+│ │ │ ├── sms_in_hscontact/
+│ │ │ │ ├── __init__.py
+│ │ │ │ └── sms_in_hscontact_logic.py 
+│ │ │ ├── sms_in_pipeline_stage/
+│ │ │ │ ├── __init__.py
+│ │ │ │ └── sms_in_pipeline_stage_logic.py 
+│ │ │ ├── function.json
+│ │ ├── outgoingsms/
+│ │ │ ├── __init__.py
+│ │ │ ├── sms_out_main/
+│ │ │ │ ├── __init__.py
+│ │ │ │ └── sms_out_main_logic.py 
+│ │ │ ├── function.json
+│ │ ├── utils.py
+│ │ ├── constants.py
+│ │ ├── rate_limiter.py
+│ │ ├── hubspot_client.py
+│ │ ├── host.json
+│ │ └── requirements.txt
+│ └── ...
+
+Each function should have its own directory with an `__init__.py` file and a `logic.py` file containing the function's execution logic. 
+
+The `function.json` file should be placed in the parent directory of the functions it corresponds to (e.g., in the `incomingsms` directory for functions that handle incoming SMS messages).
 
 
 constants.py
