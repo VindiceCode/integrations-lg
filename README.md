@@ -103,7 +103,7 @@ def find_keyword_match(content, content_hard_match_stages):
         break
     return internal_value
 
-main.py
+sms_in_main.py
 -------
 import logging
 import os
