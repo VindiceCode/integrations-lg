@@ -6,9 +6,11 @@ VindiceCode/
   │   │   ├── incomingsms/
   │   │   │   ├── __init__.py
   │   │   │   └── sms_in_main.py
+  |   |   |   |___ function.json
   │   │   ├── outgoingsms/
   │   │   │   ├── __init__.py
   │   │   │   └── sms_out_main.py
+  |   |   |   |___ function.json
   │   │   ├── utils.py
   │   │   ├── constants.py
   │   │   ├── rate_limiter.py
