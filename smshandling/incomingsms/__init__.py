@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import requests
 from hubspot import HubSpot
 from hubspot.crm.contacts import Filter, FilterGroup, PublicObjectSearchRequest, SimplePublicObjectInputForCreate
@@ -108,7 +109,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         prospect_id = prospect.get('id', '')
         # Initialize a dictionary to store the associations between IDs and names
         id_to_name = {}
-
+        # Can we create a dictionary directly instead creating list then loop it to create dictionary
         # Assume you have a list of tuples, where each tuple contains a unique ID and a name
         associations = [
             ('6413', 'Melanie Trinh'),
@@ -132,7 +133,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         message = additional.get('message')
         content = message.get('content')
         event_date = message.get('event_date')
-
+        # event_date = payload.get('additional').get('message').get('content').get('event_date')
+        
+        # Why are you using two different if , you can use or "operator" or tag.toLower() and compare with acknowledge
         # Check if tags is 'acknowledged'
         if tags == 'acknowledged':
             return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
@@ -141,7 +144,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if tags == 'Acknowledged':
             return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
         #Transform Message Content into ascii string
-        import re
         ascii_content = re.sub(r'[^\x00-\x7F]+', '_', content)
         
         # Check if dnc is Trues
@@ -152,8 +154,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         internal_value = "39142"  # Default internal value if no keyword matches
         for stage_name, stage_info in CONTENT_HARD_MATCH_STAGES.items():
             for keyword in stage_info["Keywords"]:
-                import re
-                pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
+                pattern = 'r"\b"' + re.escape(keyword.lower()) + 'r"\b"'
                 if re.search(pattern, ascii_content.lower()):
                     internal_value = stage_info["InternalValue"]
                     logging.info(f"Keyword '{keyword}' Hard matched with stage '{stage_name}' with InternalValue: {internal_value}")
