@@ -87,9 +87,7 @@ CONTENT_STRICT_MATCH_STAGES = {
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
-         # Parse the JSON payload from the request body
         payload = req.get_json()
-        # Print the JSON payload
         print(f"Payload: {payload}")
         prospect = payload.get('prospect', {})
         first_name = prospect.get('first_name', '')
@@ -100,62 +98,43 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         city = prospect.get('city', '')
         state = prospect.get('state', '')
         zip_code = prospect.get('zip', '')
-        assigned_to = prospect.get('assigned_to')
-        assigned_to = str(assigned_to)
+        assigned_to = str(prospect.get('assigned_to'))
         tags = prospect.get('tags', '')
         dnc = prospect.get('dnc', '')
         created_at = prospect.get('created_at', '')
         updated_at = prospect.get('updated_at', '')
         prospect_id = prospect.get('id', '')
-        # Initialize a dictionary to store the associations between IDs and names
-        id_to_name = {}
-        # Can we create a dictionary directly instead creating list then loop it to create dictionary
-        # Assume you have a list of tuples, where each tuple contains a unique ID and a name
-        associations = [
-            ('6413', 'Melanie Trinh'),
-            ('6416', 'Chaz Wenzel'),
-            ('7395', 'Ian Melchor'),
-            ('9934', 'Sean Muscaro'),
-            ('11125', 'Kemuel Veloz'),
-            ('11126', 'Dani Hardy'),
-            ('14138', 'Corinne Walker'),
-            ('16469', 'Eric Rayner'),
-            ('18220', 'Evan Walker'),
-            ('18221', 'Ian Evans')
-        ]
-        # Populate the dictionary with the associations
-        for id, name in associations:
-            id_to_name[str(id)] = name
-            id_to_name[id] = name
-
-        #Access the Additional Top-End Object and Message Objects
-        additional = payload.get('additional')
-        message = additional.get('message')
-        content = message.get('content')
-        event_date = message.get('event_date')
-        # event_date = payload.get('additional').get('message').get('content').get('event_date')
-        
-        # Why are you using two different if , you can use or "operator" or tag.toLower() and compare with acknowledge
-        # Check if tags is 'acknowledged'
-        if tags == 'acknowledged':
+        id_to_name = {
+            '6413': 'Melanie Trinh',
+            '6416': 'Chaz Wenzel',
+            '7395': 'Ian Melchor',
+            '9934': 'Sean Muscaro',
+            '11125': 'Kemuel Veloz',
+            '11126': 'Dani Hardy',
+            '14138': 'Corinne Walker',
+            '16469': 'Eric Rayner',
+            '18220': 'Evan Walker',
+            '18221': 'Ian Evans'
+            }
+        additional = payload.get('additional',None)
+        if additional:
+            message = additional.get('message',None)
+            if message:
+                content = message.get('content')
+                event_date = message.get('event_date')
+        if tags.lower() == 'acknowledged':
             return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
         
-         # Check if tags is 'Acknowledged'
-        if tags == 'Acknowledged':
-            return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
-        #Transform Message Content into ascii string
-        ascii_content = re.sub(r'[^\x00-\x7F]+', '_', content)
-        
-        # Check if dnc is Trues
         if dnc is True:
             return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=200)
-        
+        #Transform Message Content into ascii string
         # Default internal value
-        internal_value = "39142"  # Default internal value if no keyword matches
+        ascii_content_lower = re.sub(r'[^\x00-\x7F]+', '_', content).lower()
+        internal_value = "39142"
         for stage_name, stage_info in CONTENT_HARD_MATCH_STAGES.items():
             for keyword in stage_info["Keywords"]:
                 pattern = 'r"\b"' + re.escape(keyword.lower()) + 'r"\b"'
-                if re.search(pattern, ascii_content.lower()):
+                if re.search(pattern, ascii_content_lower):
                     internal_value = stage_info["InternalValue"]
                     logging.info(f"Keyword '{keyword}' Hard matched with stage '{stage_name}' with InternalValue: {internal_value}")
                     break
@@ -203,7 +182,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     
         if existing_contacts is None or len(existing_contacts.results) == 0:
         # Create a contact
-
             with rate_limiter_150_10:
                 # Assume assigned_to is a unique ID
                 if assigned_to in id_to_name:
@@ -227,7 +205,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "time_of_bonzo_response": event_date,
                         "bonzo_prospect_id": prospect_id,
                         "industry": prospect_id,
-                        "bonzo_lead_initial_response": ascii_content,
+                        "bonzo_lead_initial_response": ascii_content_lower,
                         "website": f"https://platform.getbonzo.com/prospect/{prospect_id}",
                         "annualrevenue": assigned_to,
                         "bonzo_pipeline_stage": internal_value,
