@@ -32,19 +32,19 @@ jobs:
           source venv/bin/activate
           
       - name: Install dependencies
-        working-directory: smshandling
+        working-directory: callhandling
         run: pip install -r requirements.txt
 
       # Optional: Add step to run tests here
 
       - name: Zip artifact for deployment
         run:  |
-          cd smshandling
+          cd callhandling
           zip release.zip ./* -r
 
       - name: Upload artifact for deployment job (route cd to callhandling)
         run: |
-          cd smshandling
+          cd callhandling
           echo "Current directory: $(pwd)"
           zip release.zip ./* -r
         shell: bash
