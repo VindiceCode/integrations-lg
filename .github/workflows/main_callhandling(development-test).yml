@@ -7,7 +7,7 @@ name: Build and deploy Python project to Azure Function App - callhandling
 on:
   push:
     branches:
-      - main
+      - sj/bonzosms
   workflow_dispatch:
 
 env:
