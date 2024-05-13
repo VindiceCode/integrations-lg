@@ -23,6 +23,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         additional = payload.get('additional', {})
         message = additional.get('message', {})
         content = message.get('content')
+        prospect = payload.get('prospect', {})
+        phone_number = prospect.get('phone')
         
         smscreatedate = additional.get('message', {}).get('created_at', {})
         smscreatedate_obj = datetime.strptime(smscreatedate, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -31,10 +33,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         smscreatedate_seconds = smscreatedate_milliseconds / 1000
         smscreatedate_obj = datetime.fromtimestamp(smscreatedate_seconds)
         formatted_date = smscreatedate_obj.strftime("%B-%d %H:%M")
-
-        prospect = payload.get('prospect', {})
-        phone_number = prospect.get('phone')
-
 
         if not phone_number:
             return func.HttpResponse("No phone number provided in the payload.", status_code=400)
