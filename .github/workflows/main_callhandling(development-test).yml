@@ -53,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: python-app
-          path: ./callhandling/release.zip
+          path: ./smshandling/release.zip
     
   deploy:
     runs-on: ubuntu-latest
