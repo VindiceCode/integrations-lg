@@ -79,7 +79,7 @@ jobs:
         id: deploy-to-function
         with:
           app-name: 'callhandling'
-          slot-name: 'Development-Test'
+          slot-name: 'developmentslot'
           package: '.'
           scm-do-build-during-deployment: true
           enable-oryx-build: true
