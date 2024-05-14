@@ -28,21 +28,30 @@ jobs:
           source venv/bin/activate
 
       - name: Install dependencies
+        working-directory: callhandling
         run: pip install -r requirements.txt
 
       # Optional: Add step to run tests here - 
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
-
-      - name: Upload artifact for deployment job
+        run:  |
+          cd callhandling
+          zip release.zip ./* -r
+       
+      
+      - name: Upload artifact for deployment job (route cd to callhandling)
+        run: |
+          cd callhandling
+          echo "Current directory: $(pwd)"
+          zip release.zip ./* -r
+        shell: bash
+        
+      - name: Upload artifact for deployment job (from callhandling)
         uses: actions/upload-artifact@v3
         with:
           name: python-app
-          path: |
-            release.zip
-            !venv/
-
+          path: ./callhandling/release.zip
+          
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -59,11 +68,16 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
+      - name: Print working directory
+        run: pwd
+
       - name: 'Deploy to Azure Functions'
         uses: Azure/functions-action@v1
         id: deploy-to-function
         with:
           app-name: 'callhandling'
           slot-name: 'developmentslot'
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          package: '.'
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_4592A32C96F24FA7A73663C49489E6C3 }}
