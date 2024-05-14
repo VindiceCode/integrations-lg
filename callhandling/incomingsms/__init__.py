@@ -11,7 +11,6 @@ from ratelimiter import RateLimiter
 import json
 
 
-
 # Define keyword mappings to internal values
 CONTENT_HARD_MATCH_STAGES = {
     #OptOut Comes First to ensure DNC Terms Prioritized
@@ -69,8 +68,7 @@ CONTENT_HARD_MATCH_STAGES = {
             "no thank you", "no", "you are spam", "i'm not interested, thank you",
             "all good", "i'm okay", "i'm all set thank you", "u+1f44e",
             "i'm not looking for a mortgage", "all set",
-            "no thx", "why are you texting me? i'm set up already. thks",
-            "i'm looking into that right now", "i do not need your services",
+            "no thx", "why are you texting me? i'm set up already. thks", "i do not need your services",
             "hi, i don't. thanks", "all set, ty", "i do not need any services. thank you",
             "don't need ya", "neither one i'm good thank you", "i don't need a new mortgage",
             "not interested", "i'm not looking to refi or purchase", "i am no longer taking estimates",
@@ -78,7 +76,7 @@ CONTENT_HARD_MATCH_STAGES = {
             "have everything covered", "we are good", "do not need your services",
             "i am good for now", "isn't something i'd like to do", "not interested"
         ]
-    }
+    },
 }
 
 CONTENT_STRICT_MATCH_STAGES = {
