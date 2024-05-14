@@ -75,7 +75,7 @@ jobs:
         run: pwd
         
       - name: 'Deploy to Azure Functions'
-        uses: Azure/functions-action@v2
+        uses: Azure/functions-action@v1
         id: deploy-to-function
         with:
           app-name: 'callhandling'
