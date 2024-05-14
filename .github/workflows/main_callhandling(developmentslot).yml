@@ -1,7 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-# More info on Python, GitHub Actions, and Azure Functions: https://aka.ms/python-webapps-actions
-
 name: Build and deploy Python project to Azure Function App - callhandling
 
 on:
@@ -53,8 +49,6 @@ jobs:
     environment:
       name: 'developmentslot'
       url: ${{ steps.deploy-to-function.outputs.webapp-url }}
-    permissions:
-      id-token: write #This is required for requesting the JWT
 
     steps:
       - name: Download artifact from build job
@@ -63,14 +57,7 @@ jobs:
           name: python-app
 
       - name: Unzip artifact for deployment
-        run: unzip release.zip     
-        
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_8974B5CD68F2483FB2EEE6E25DC2B2C5 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_47C6D560D08845C2A3E2FF6AB0E45A71 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_081EF82AFE76430D82FE5AF169BBFB09 }}
+        run: unzip release.zip
 
       - name: 'Deploy to Azure Functions'
         uses: Azure/functions-action@v1
@@ -79,6 +66,4 @@ jobs:
           app-name: 'callhandling'
           slot-name: 'developmentslot'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          scm-do-build-during-deployment: true
-          enable-oryx-build: true
-          
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_4592A32C96F24FA7A73663C49489E6C3 }}
