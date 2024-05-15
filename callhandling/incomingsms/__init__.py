@@ -42,7 +42,7 @@ CONTENT_HARD_MATCH_STAGES = {
     "Land Loan": {
         "InternalValue": 170388,
         "Keywords": [
-            "land loan", "land"
+            "land loan", "land", "loan"
         ]
     },
      "Ask For LE / Already in Process": {
@@ -80,13 +80,11 @@ CONTENT_HARD_MATCH_STAGES = {
     },
 }
 
-CONTENT_STRICT_MATCH_STAGES = {
-}
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         payload = req.get_json()
-        print(f"Payload: {payload}")
+        logging.info("payload",payload)
         prospect = payload.get('prospect', {})
         first_name = prospect.get('first_name', '')
         last_name = prospect.get('last_name', '')
@@ -120,11 +118,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             if message:
                 content = message.get('content')
                 event_date = message.get('event_date')
-        if tags.lower() == 'acknowledged':
+        if 'acknowledged' in tags or "Acknowledge" in tags:
             return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
         
         if dnc is True:
-            return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=200)
+            return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=400)
         #Transform Message Content into ascii string
         # Default internal value
         ascii_content_lower = re.sub(r'[^\x00-\x7F]+', '_', content).lower()
@@ -136,8 +134,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     internal_value = stage_info["InternalValue"]
                     logging.info(f"Keyword '{keyword}' Hard matched with stage '{stage_name}' with InternalValue: {internal_value}")
                     break
-            else:
-                continue  # only executed if the inner loop did NOT break
+                else:
+                    continue  # only executed if the inner loop did NOT break
             break  # first break exits the inner loop, this break exits the outer loop
 
         logging.info(f"Proceeding with contact creation/update with InternalValue: {internal_value}")
@@ -162,7 +160,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
         try:
             # Initialize a Rate Limiter Instance for Hubspot Search 4_1 API Limits
-            rate_limiter_4_1 = RateLimiter(max_calls=4, period=1)
+            rate_limiter_4_1 = RateLimiter(max_calls=9, period=1)
             with rate_limiter_4_1:
                 existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
                 
@@ -174,7 +172,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 raise
 
         # Create a RateLimiter instance
-        rate_limiter_150_10 = RateLimiter(max_calls=150, period=10)
+        rate_limiter_150_10 = RateLimiter(max_calls=100, period=10)
         existing_contacts = None
 
     
@@ -215,7 +213,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 
                 print(api_response)
 
-        return func.HttpResponse("Success! Hawkvision Contact Created in Hubspot - One Step Closer to World Domination!", status_code=200)
+        return func.HttpResponse("Success! Incoming sms Contact Created in Hubspot - One Step Closer to World Domination!", status_code=200)
 
 
     except ValueError as ve:
