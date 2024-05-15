@@ -8,6 +8,10 @@ from hubspot.crm.contacts.exceptions import ApiException
 import ratelimiter
 from datetime import datetime
 import pytz
+app = func.FunctionApp()
+
+@app.function_name(name="HttpTrigger1")
+@app.route(route="req")
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
@@ -38,6 +42,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             return func.HttpResponse("No phone number provided in the payload.", status_code=400)
 
         # Initialize the HubSpot API Client
+        access = os.environ["hubspot_privateapp_access_token"]
+        print(access)
         client = HubSpot(access_token=os.getenv('hubspot_privateapp_access_token'))
 
         # Search for existing contact
