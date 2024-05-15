@@ -23,30 +23,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         additional = payload.get('additional', {})
         message = additional.get('message', {})
         content = message.get('content')
-        smscreatedate = additional.get('message', {}).get('created_at', {})
-
-        # Convert the date string to a datetime object
-        smscreatedate_obj = datetime.strptime(smscreatedate, "%Y-%m-%dT%H:%M:%S.%fZ")
-
-        # Convert the datetime object to a Unix timestamp
-        smscreatedate_timestamp = smscreatedate_obj.replace(tzinfo=pytz.UTC).timestamp()
-
-        # Convert the Unix timestamp to milliseconds
-        smscreatedate_milliseconds = int(smscreatedate_timestamp * 1000)
-
-        # Convert the timestamp from milliseconds to seconds
-        smscreatedate_seconds = smscreatedate_milliseconds / 1000
-
-        # Create a datetime object from the timestamp
-        smscreatedate_obj = datetime.fromtimestamp(smscreatedate_seconds)
-
-        # Format the datetime object as a string
-        formatted_date = smscreatedate_obj.strftime("%B-%d %H:%M")
-
-        # Extract prospect details
         prospect = payload.get('prospect', {})
         phone_number = prospect.get('phone')
-
+        
+        smscreatedate = additional.get('message', {}).get('created_at', {})
+        smscreatedate_obj = datetime.strptime(smscreatedate, "%Y-%m-%dT%H:%M:%S.%fZ")
+        smscreatedate_timestamp = smscreatedate_obj.replace(tzinfo=pytz.UTC).timestamp()
+        smscreatedate_milliseconds = int(smscreatedate_timestamp * 1000)
+        smscreatedate_seconds = smscreatedate_milliseconds / 1000
+        smscreatedate_obj = datetime.fromtimestamp(smscreatedate_seconds)
+        formatted_date = smscreatedate_obj.strftime("%B-%d %H:%M")
 
         if not phone_number:
             return func.HttpResponse("No phone number provided in the payload.", status_code=400)
