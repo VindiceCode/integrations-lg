@@ -115,7 +115,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             ('9934', 'Sean Muscaro'),
             ('11125', 'Kemuel Veloz'),
             ('11126', 'Dani Hardy'),
-            ('14138', 'Corinne Walker'),
+            ('14138', 'Corie Walker'),
             ('16469', 'Eric Rayner'),
             ('18220', 'Evan Walker'),
             ('18221', 'Ian Evans')
