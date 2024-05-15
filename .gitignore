@@ -2,7 +2,7 @@
 # Virtual environment
 **/.venv/
 **/__pycache__/
-
+env
 # Azurite files
 **/__azurite_db_blob__.json
 **/__azurite_db_blob_extent__.json
