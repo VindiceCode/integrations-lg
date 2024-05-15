@@ -139,7 +139,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if tags == 'Acknowledged':
             return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
         #Transform Message Content into ascii string
-        import re #explicit re import for bug fix
+        import re #explicit re import for bug fix 1
         ascii_content = re.sub(r'[^\x00-\x7F]+', '_', content)
         
         # Check if dnc is Trues
@@ -150,7 +150,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         internal_value = "39142"  # Default internal value if no keyword matches
         for stage_name, stage_info in CONTENT_HARD_MATCH_STAGES.items():
             for keyword in stage_info["Keywords"]:
-                import re #explicit re import for bug fix
+                import re #explicit re import for bug fix 2
                 pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
                 if re.search(pattern, ascii_content.lower()):
                     internal_value = stage_info["InternalValue"]
@@ -243,7 +243,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.error(f"ValueError: {str(ve)}")
         return func.HttpResponse("Invalid input", status_code=400)
 
-    except requests.exceptions.RequestException as re:
+    except requests.exceptions.RequestException as req_exception:
         logging.error(f"RequestException: {str(re)}")
         return func.HttpResponse("An error occurred while making a request", status_code=500)
 
