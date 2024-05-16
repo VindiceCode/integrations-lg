@@ -14,7 +14,7 @@ import time
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         payload = req.get_json()
-        logging.info(f"Payload: {payload}")
+        # logging.info(f"Payload: {payload}")
 
         event_type = payload.get('event')
         if event_type != 'messages.outgoing.created':

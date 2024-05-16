@@ -42,7 +42,7 @@ CONTENT_HARD_MATCH_STAGES = {
     "Land Loan": {
         "InternalValue": 170388,
         "Keywords": [
-            "land loan", "land", "loan"
+            "land loan", "land"
         ]
     },
      "Ask For LE / Already in Process": {
@@ -84,7 +84,7 @@ CONTENT_HARD_MATCH_STAGES = {
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         payload = req.get_json()
-        logging.info("payload",payload)
+        logging.info(f"payload is not showing : {payload}")
         prospect = payload.get('prospect', {})
         first_name = prospect.get('first_name', '')
         last_name = prospect.get('last_name', '')
