@@ -42,9 +42,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
 
         # Rate limit the search API
-        with ratelimiter.RateLimiter(max_calls=9, period=1):
-            search_response = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
-            time.sleep(.250)
+        search_response = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
+        time.sleep(1)
 
         if search_response.total > 0:
             existing_contacts = search_response.results
@@ -60,7 +59,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 contact_id,
                 SimplePublicObjectInput(properties=properties_to_update)
             )
-            time.sleep(.250)
+            time.sleep(1)
             return func.HttpResponse(f"Successfully updated HubSpot contact {contact_id}.", status_code=200)
         else:
             logging.info(f"No corresponding contact found in HubSpot; outgoing message not logged.")
