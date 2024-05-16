@@ -3,7 +3,7 @@ name: Build and deploy Python project to Azure Function App - callhandling
 on:
   push:
     branches:
-      - main
+      - sj/callhandling
   workflow_dispatch:
 
 env:

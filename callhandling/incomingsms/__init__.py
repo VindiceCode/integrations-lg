@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import requests
 from hubspot import HubSpot
 from hubspot.crm.contacts import Filter, FilterGroup, PublicObjectSearchRequest, SimplePublicObjectInputForCreate
@@ -9,25 +10,31 @@ import hubspot
 import azure.functions as func
 from ratelimiter import RateLimiter
 import json
+import time
 
 
 # Define keyword mappings to internal values
-CONTENT_HARD_MATCH_STAGES = {
+CONTENT_HARD_MATCH_STAGES = [
     #OptOut Comes First to ensure DNC Terms Prioritized
-    "Hard DNC Language": {
+    {
+        "type" : "Hard DNC Language",
         "InternalValue": 177397,
         "Keywords": [
             "opt me out", "opt us out", "stop", "opt out", "do not contact",
             "don't contact", "stop!", "shtop", "dnc", "delete", "delete", "dnc","please remove","don't text", "don't message", "don't call", "don't text me", "don't message me", "don't call me", "don't contact me", "don't reach out"
-        ]
-    },
-    "Wrong Number": {
+            ]
+        }
+    ,
+    {
+        "type":"Wrong Number",
         "InternalValue": 170391,
         "Keywords": [
             "wrong number", "this is not", "this isn't"
-        ]
-    },
-    "Do not want a response": {
+            ]
+        }
+    ,
+    {
+        "type":"Do not want a response",
         "InternalValue": 170389,
         "Keywords": [
             "hell", "fuck", "suck", "remove", "leave alone",
@@ -36,33 +43,43 @@ CONTENT_HARD_MATCH_STAGES = {
             "ass", "asshole", "f off", "asshole", "remove my", "bother me",
             "reach out", "do not message", "do not text", "lawyer", "sue",
             "legal action", "fraud", "illegal"
-        ]
-    },
-    "Land Loan": {
+            ]
+        }
+    ,
+    {
+        "type":"Land Loan",
         "InternalValue": 170388,
         "Keywords": [
             "land loan", "land"
-        ]
-    },
-     "Ask For LE / Already in Process": {
+            ]
+        }
+    ,
+    {
+        "type": "Ask For LE / Already in Process",
         "InternalValue": 104247,
         "Keywords": [
             "locked", "contract", "closing date", "closing"
-        ]
-    },
-    "HELOC / No Cash-Out Intention": {
+            ]
+        }
+    ,
+    {
+        "type":"HELOC / No Cash-Out Intention",
         "InternalValue": 39143,
         "Keywords": [
             "HELOC", "HELOAN", "Equity Line"
-        ]
-    },
-    "Spanish": {
+            ]
+        }
+    ,
+    {
+        "type":"Spanish",
         "InternalValue": 170449,
         "Keywords": [
             "habla", "Espanol", "ITIN", "Spanish"
-        ]
-    },
-    "Not Interested": {
+            ]
+        }
+    ,
+    {
+        "type":"Not Interested",
         "InternalValue": 39140,
         "Keywords": [
             "no thank you", "no", "you are spam", "i'm not interested, thank you",
@@ -75,19 +92,15 @@ CONTENT_HARD_MATCH_STAGES = {
             "not looking for new home options", "how about no", "we are all set",
             "have everything covered", "we are good", "do not need your services",
             "i am good for now", "isn't something i'd like to do", "not interested"
-        ]
-    },
-}
+            ]
+        }   
+]
 
-CONTENT_STRICT_MATCH_STAGES = {
-}
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
-         # Parse the JSON payload from the request body
         payload = req.get_json()
-        # Print the JSON payload
-        print(f"Payload: {payload}")
+        logging.info(f"payload  : {payload}")
         prospect = payload.get('prospect', {})
         first_name = prospect.get('first_name', '')
         last_name = prospect.get('last_name', '')
@@ -97,76 +110,54 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         city = prospect.get('city', '')
         state = prospect.get('state', '')
         zip_code = prospect.get('zip', '')
-        assigned_to = prospect.get('assigned_to')
-        assigned_to = str(assigned_to)
-        tags = prospect.get('tags', '')
+        assigned_to = str(prospect.get('assigned_to'))
+        tags = prospect.get('tags', [])
         dnc = prospect.get('dnc', '')
         created_at = prospect.get('created_at', '')
         updated_at = prospect.get('updated_at', '')
         prospect_id = prospect.get('id', '')
-        # Initialize a dictionary to store the associations between IDs and names
-        id_to_name = {}
 
-        # Assume you have a list of tuples, where each tuple contains a unique ID and a name
-        associations = [
-            ('6413', 'Melanie Trinh'),
-            ('6416', 'Chaz Wenzel'),
-            ('7395', 'Ian Melchor'),
-            ('9934', 'Sean Muscaro'),
-            ('11125', 'Kemuel Veloz'),
-            ('11126', 'Dani Hardy'),
-            ('14138', 'Corie Walker'),
-            ('16469', 'Eric Rayner'),
-            ('18220', 'Evan Walker'),
-            ('18221', 'Ian Evans')
-        ]
-        # Populate the dictionary with the associations
-        for id, name in associations:
-            id_to_name[str(id)] = name
-            id_to_name[id] = name
-
-        #Access the Additional Top-End Object and Message Objects
-        additional = payload.get('additional')
-        message = additional.get('message')
-        content = message.get('content')
-        event_date = message.get('event_date')
-
-        # Check if tags is 'acknowledged'
-        if tags == 'acknowledged':
+        id_to_name = {
+            '6413': 'Melanie Trinh',
+            '6416': 'Chaz Wenzel',
+            '7395': 'Ian Melchor',
+            '9934': 'Sean Muscaro',
+            '11125': 'Kemuel Veloz',
+            '11126': 'Dani Hardy',
+            '14138': 'Corinne Walker',
+            '16469': 'Eric Rayner',
+            '18220': 'Evan Walker',
+            '18221': 'Ian Evans'
+            }
+        additional = payload.get('additional',None)
+        if additional:
+            message = additional.get('message',None)
+            if message:
+                content = message.get('content')
+                event_date = message.get('event_date')
+        if 'acknowledged' in tags or "Acknowledge" in tags:
+            logging.info(f"Tags is 'acknowledged'. Not creating a HubSpot contact.")
             return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
         
-         # Check if tags is 'Acknowledged'
-        if tags == 'Acknowledged':
-            return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
-        #Transform Message Content into ascii string
-        import re #explicit re import for bug fix 1
-        ascii_content = re.sub(r'[^\x00-\x7F]+', '_', content)
-        
-        # Check if dnc is Trues
         if dnc is True:
-            return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=200)
-        
+            logging.info(f"DNC is True. Not creating a HubSpot contact.")
+            return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=400)
+        #Transform Message Content into ascii string
         # Default internal value
-        internal_value = "39142"  # Default internal value if no keyword matches
-        for stage_name, stage_info in CONTENT_HARD_MATCH_STAGES.items():
-            for keyword in stage_info["Keywords"]:
-                import re #explicit re import for bug fix 2
-                pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
-                if re.search(pattern, ascii_content.lower()):
-                    internal_value = stage_info["InternalValue"]
-                    logging.info(f"Keyword '{keyword}' Hard matched with stage '{stage_name}' with InternalValue: {internal_value}")
-                    break
-            else:
-                continue  # only executed if the inner loop did NOT break
-            break  # first break exits the inner loop, this break exits the outer loop
 
+        ascii_content_lower = re.sub(r'[^\x00-\x7F]+', ' ', content).lower()
+        internal_value = "39142"
+        for key in CONTENT_HARD_MATCH_STAGES:
+            keywords = [rf'{re.escape(keyword.lower())}' for keyword in key['Keywords']]
+            pattern = '|'.join(keywords)
+            if re.search(pattern, ascii_content_lower):
+                internal_value = key['InternalValue']
+                type = key["type"]
+                logging.info(f"Keyword '{pattern}' Hard matched with stage '{type}' with InternalValue: {internal_value}")
+                break
+        
         logging.info(f"Proceeding with contact creation/update with InternalValue: {internal_value}")
         
-
-        # Create a list to store the captured properties
-        captured_properties = [first_name, last_name, full_name, phone_number, address, city, state, zip_code, assigned_to, tags, dnc, created_at, updated_at, prospect_id, message]
-        
-
          # Initialize the HubSpot API Client
         access_token = os.getenv('hubspot_privateapp_access_token')
         client = hubspot.Client.create(access_token=access_token)
@@ -180,37 +171,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         
         filter_group = FilterGroup(filters=[filter])
         search_request = PublicObjectSearchRequest(filter_groups=[filter_group])
+
         try:
-            # Initialize a Rate Limiter Instance for Hubspot Search 4_1 API Limits
-            rate_limiter_4_1 = RateLimiter(max_calls=4, period=1)
-            with rate_limiter_4_1:
-                existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
-                
+            time.sleep(1)
+            existing_contacts = client.crm.contacts.search_api.do_search(public_object_search_request=search_request)
                 # Check if existing contacts were found
-                if existing_contacts and existing_contacts.total > 0:
-                    return func.HttpResponse("Contact already exists.", status_code=200)
-        except ApiException as e:
-            if e.status != 404:  # If the status code is not 404, re-raise the exception
-                raise
-
-        # Create a RateLimiter instance
-        rate_limiter_150_10 = RateLimiter(max_calls=150, period=10)
-        existing_contacts = None
-
-    
-        if existing_contacts is None or len(existing_contacts.results) == 0:
-        # Create a contact
-
-            with rate_limiter_150_10:
-                # Assume assigned_to is a unique ID
+            if existing_contacts and existing_contacts.total > 0:
+                return func.HttpResponse("Contact already exists.", status_code=200)
+            else :
                 if assigned_to in id_to_name:
                     assigned_to_name = id_to_name[assigned_to]
                     logging.info(f"Assigned to name: {assigned_to_name}")
-                else:
-                    logging.warning(f"Assigned to ID {assigned_to} not found in the dictionary")
-                    return func.HttpResponse(f"Assigned to ID {assigned_to} not found in the dictionary", status_code=400)
-                logging.info(f"Assigned to name: {assigned_to_name}")
-                simple_public_object_input_for_create = SimplePublicObjectInputForCreate(
+                    simple_public_object_input_for_create = SimplePublicObjectInputForCreate(
                     properties={
                         "firstname": first_name,
                         "lastname": last_name,
@@ -224,32 +196,35 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "time_of_bonzo_response": event_date,
                         "bonzo_prospect_id": prospect_id,
                         "industry": prospect_id,
-                        "bonzo_lead_initial_response": ascii_content,
+                        "bonzo_lead_initial_response": ascii_content_lower,
                         "website": f"https://platform.getbonzo.com/prospect/{prospect_id}",
                         "annualrevenue": assigned_to,
                         "bonzo_pipeline_stage": internal_value,
                     }
-                )
-                api_response = client.crm.contacts.basic_api.create(
-                    simple_public_object_input_for_create=simple_public_object_input_for_create
-                )
-                
-                print(api_response)
+                    )
+                    time.sleep(1)
+                    api_response = client.crm.contacts.basic_api.create(
+                        simple_public_object_input_for_create=simple_public_object_input_for_create
+                    )
+                    logging.info(f"Contact creted Api response: {api_response}")
+                    return func.HttpResponse("Success! Incoming sms Contact Created in Hubspot - One Step Closer to World Domination!", status_code=200)
+                logging.warning(f"Assigned to ID {assigned_to} not found in the dictionary")
+                return func.HttpResponse(f"Assigned to ID {assigned_to} not found in the dictionary", status_code=400)
+        except ApiException as e:
+            if e.status != 404:  # If the status code is not 404, re-raise the exception
+                raise            
+        except ValueError as ve:
+            logging.error(f"ValueError: {str(ve)}")
+            return func.HttpResponse("Invalid input", status_code=400)
 
-        return func.HttpResponse("Success! Hawkvision Contact Created in Hubspot - One Step Closer to World Domination!", status_code=200)
+        except requests.exceptions.RequestException as err:
+            logging.error(f"RequestException: {str(err)}")
+            return func.HttpResponse("An error occurred while making a request", status_code=500)
 
+        except Exception as e:
+            logging.error(f"Exception: {str(e)}")
+            return func.HttpResponse("An error occurred", status_code=500)
 
-    except ValueError as ve:
-        logging.error(f"ValueError: {str(ve)}")
-        return func.HttpResponse("Invalid input", status_code=400)
-
-    except requests.exceptions.RequestException as req_exception:
-        logging.error(f"RequestException: {str(re)}")
-        return func.HttpResponse("An error occurred while making a request", status_code=500)
-
-    except Exception as e:
-        logging.error(f"Exception: {str(e)}")
-        return func.HttpResponse("An error occurred", status_code=500)
     
     except ApiException as ae:
         logging.error(f"ApiException: {str(ae)}")
