@@ -116,6 +116,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         created_at = prospect.get('created_at', '')
         updated_at = prospect.get('updated_at', '')
         prospect_id = prospect.get('id', '')
+
         id_to_name = {
             '6413': 'Melanie Trinh',
             '6416': 'Chaz Wenzel',
@@ -143,6 +144,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=400)
         #Transform Message Content into ascii string
         # Default internal value
+
         ascii_content_lower = re.sub(r'[^\x00-\x7F]+', ' ', content).lower()
         internal_value = "39142"
         for key in CONTENT_HARD_MATCH_STAGES:
@@ -153,7 +155,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 type = key["type"]
                 logging.info(f"Keyword '{pattern}' Hard matched with stage '{type}' with InternalValue: {internal_value}")
                 break
-
+        
         logging.info(f"Proceeding with contact creation/update with InternalValue: {internal_value}")
         
          # Initialize the HubSpot API Client
@@ -222,6 +224,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         except Exception as e:
             logging.error(f"Exception: {str(e)}")
             return func.HttpResponse("An error occurred", status_code=500)
+
     
     except ApiException as ae:
         logging.error(f"ApiException: {str(ae)}")
