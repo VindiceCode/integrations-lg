@@ -222,8 +222,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.error(f"ValueError: {str(ve)}")
         return func.HttpResponse("Invalid input", status_code=400)
 
-    except requests.exceptions.RequestException as re:
-        logging.error(f"RequestException: {str(re)}")
+    except requests.exceptions.RequestException as err:
+        logging.error(f"RequestException: {str(err)}")
         return func.HttpResponse("An error occurred while making a request", status_code=500)
 
     except Exception as e:
