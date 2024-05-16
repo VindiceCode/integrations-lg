@@ -84,7 +84,7 @@ CONTENT_HARD_MATCH_STAGES = {
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         payload = req.get_json()
-        logging.info(f"payload is not showing : {payload}")
+        logging.info(f"payload  : {payload}")
         prospect = payload.get('prospect', {})
         first_name = prospect.get('first_name', '')
         last_name = prospect.get('last_name', '')
@@ -95,7 +95,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         state = prospect.get('state', '')
         zip_code = prospect.get('zip', '')
         assigned_to = str(prospect.get('assigned_to'))
-        tags = prospect.get('tags', '')
+        tags = prospect.get('tags', [])
         dnc = prospect.get('dnc', '')
         created_at = prospect.get('created_at', '')
         updated_at = prospect.get('updated_at', '')
@@ -119,9 +119,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 content = message.get('content')
                 event_date = message.get('event_date')
         if 'acknowledged' in tags or "Acknowledge" in tags:
+            logging.info(f"Tags is 'acknowledged'. Not creating a HubSpot contact.")
             return func.HttpResponse("Tags is 'acknowledged'. Not creating a HubSpot contact.", status_code=200)
         
         if dnc is True:
+            logging.info(f"DNC is True. Not creating a HubSpot contact.")
             return func.HttpResponse("DNC is True. Not creating a HubSpot contact.", status_code=400)
         #Transform Message Content into ascii string
         # Default internal value

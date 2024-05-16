@@ -19,7 +19,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         event_type = payload.get('event')
         if event_type != 'messages.outgoing.created':
             logging.info(f"This is not the outgoing created message")
-            return func.HttpResponse("This function only handles outgoing messages.", status_code=400)
+            return func.HttpResponse("This function only handles outgoing messages.", status_code=200)
 
         # Access the Additional Top-End Object and Message Objects
         additional = payload.get('additional', {})
@@ -32,7 +32,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         if not phone_number:
             logging.info(f"No phone number provided in the payload.")
-            return func.HttpResponse("No phone number provided in the payload.", status_code=400)
+            return func.HttpResponse("No phone number provided in the payload.", status_code=200)
 
         client = HubSpot(access_token=os.getenv('hubspot_privateapp_access_token'))
 
