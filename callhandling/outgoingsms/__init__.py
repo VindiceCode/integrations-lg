@@ -22,9 +22,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             return func.HttpResponse("This function only handles outgoing messages.", status_code=200)
 
         # Access the Additional Top-End Object and Message Objects
-        additional = payload.get('additional', {})
-        message = additional.get('message', {})
-        content = message.get('content')
+        additional = payload.get('additional',None)
+        if additional:
+            message = additional.get('message',None)
+            if message:
+                content = message.get('content')
         prospect = payload.get('prospect', {})
         phone_number = prospect.get('phone')
         
